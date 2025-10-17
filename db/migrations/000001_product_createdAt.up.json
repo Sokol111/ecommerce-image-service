@@ -1,0 +1,17 @@
+[
+    {
+        "createIndexes": "product",
+        "indexes": [
+            {
+                "name": "product_createdAt_v1",
+                "key": {
+                    "createdAt": 1
+                }
+            }
+        ],
+        "commitQuorum": "majority",
+        "writeConcern": {
+            "w": "majority"
+        }
+    }
+]

@@ -1,0 +1,21 @@
+logger:
+  level: "debug"
+
+server:
+  port: 8080
+
+mongo:
+  host: "mongo"
+  port: 27017
+  database: "image"
+  replica-set: rs0
+
+# kafka:
+#   brokers: "kafka:29092"
+
+observability:
+  tracing-enabled: true
+  metrics-enabled: false
+  metrics-interval: 10s
+  otel-collector-endpoint: "otel-collector-opentelemetry-collector.observability.svc:4317"
+  prometheus-endpoint: "prometheus-server.observability.svc:9090"

@@ -1,0 +1,9 @@
+[
+    {
+        "dropIndexes": "product",
+        "index": "product_createdAt_v1",
+        "writeConcern": {
+            "w": "majority"
+        }
+    }
+]

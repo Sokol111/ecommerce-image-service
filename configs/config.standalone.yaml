@@ -1,0 +1,18 @@
+logger:
+  level: "debug"
+
+server:
+  port: 8080
+
+mongo:
+  host: "localhost"
+  port: 27017
+  database: "image"
+  direct-connection: true
+
+# kafka:
+#   brokers: "localhost:9092"
+
+observability:
+  tracing-enabled: true
+  otel-collector-endpoint: ""

@@ -1,0 +1,18 @@
+logger:
+  level: "debug"
+
+server:
+  port: 8080
+
+mongo:
+  host: ""
+  port: 27017
+  replica-set: rs0
+  database: "product"
+
+kafka:
+  brokers: ""
+
+observability:
+  tracing-enabled: true
+  otel-collector-endpoint: ""
