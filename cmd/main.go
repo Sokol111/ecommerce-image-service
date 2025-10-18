@@ -5,6 +5,8 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/module"
 	"github.com/Sokol111/ecommerce-image-service/internal/http"
+	"github.com/Sokol111/ecommerce-image-service/internal/image"
+	"github.com/Sokol111/ecommerce-image-service/internal/s3"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -12,7 +14,8 @@ import (
 var AppModules = fx.Options(
 	module.NewInfraModule(),
 	// module.NewKafkaModule(),
-	// product.NewBusinessModule(),
+	s3.NewS3Module(),
+	image.NewBusinessModule(),
 	http.NewHttpHandlerModule(),
 )
 

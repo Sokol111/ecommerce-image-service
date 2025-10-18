@@ -47,5 +47,8 @@ func newConfig(v *viper.Viper) (Config, error) {
 	if cfg.PresignTTL == 0 {
 		cfg.PresignTTL = 15 * time.Minute
 	}
+	if cfg.MaxUploadBytes == 0 {
+		cfg.MaxUploadBytes = 1 * 1024 * 1024 // 1 MB
+	}
 	return cfg, nil
 }

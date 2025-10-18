@@ -28,7 +28,7 @@ type service struct {
 	// txManager mongo.TxManager
 }
 
-func NewService(store Store, cfg s3.Config, c *awss3.Client, p *awss3.PresignClient) model.ImageService {
+func newService(store Store, cfg s3.Config, c *awss3.Client, p *awss3.PresignClient) model.ImageService {
 	return &service{
 		store:      store,
 		bucket:     cfg.Bucket,
@@ -96,7 +96,7 @@ func (s *service) ConfirmDraftUpload(ctx context.Context, dto model.ConfirmDraft
 			Bucket: aws.String(s.bucket),
 			Key:    aws.String(dto.Key),
 		})
-		return nil, fmt.Errorf("File too large: max %d bytes", s.maxBytes)
+		return nil, fmt.Errorf("file too large: max %d bytes", s.maxBytes)
 	}
 
 	now := time.Now().UTC()

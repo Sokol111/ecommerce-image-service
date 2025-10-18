@@ -15,4 +15,13 @@ mongo:
 
 observability:
   tracing-enabled: true
+  metrics-enabled: false
   otel-collector-endpoint: ""
+
+s3:
+  endpoint: "minio.127.0.0.1.nip.io"
+  region: "us-east-1"
+  bucket: "products"
+  secret-key: "minioadmin"
+  access-key-id: "minioadmin123"
+  use-path-style: true
