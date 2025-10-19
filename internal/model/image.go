@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -50,10 +51,25 @@ type PromoteDraftDTO struct {
 	ProductId string
 }
 
+type GetDeliveryUrlDTO struct {
+	ImageId string
+	Width   *int
+	Height  *int
+	Fit     *string // fit | fill | fill-down | force | auto
+	Quality *int    // 1..100
+	DPR     *float32
+	Format  *string    // webp | avif | jpeg | png | "" (оригінал)
+	Expires *time.Time // якщо хочеш “exp:unix”
+}
+
+var ErrEntityNotFound = errors.New("entity not found")
+
 type ImageService interface {
 	CreateDraftPresign(ctx context.Context, dto CreatePresignForDraftDTO) (CreatePresignForDraftResponseDTO, error)
 
 	ConfirmDraftUpload(ctx context.Context, dto ConfirmDraftUploadDTO) (*Image, error)
 
 	PromoteDraftImages(ctx context.Context, dto PromoteDraftDTO) ([]*Image, error)
+
+	GetDeliveryUrl(ctx context.Context, opts GetDeliveryUrlDTO) (string, *time.Time, error)
 }

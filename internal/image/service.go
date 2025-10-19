@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sokol111/ecommerce-image-service/internal/imgproxy"
 	"github.com/Sokol111/ecommerce-image-service/internal/model"
 	"github.com/Sokol111/ecommerce-image-service/internal/s3"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -24,11 +25,12 @@ type service struct {
 	presigner  *awss3.PresignClient
 	presignTTL time.Duration
 	maxBytes   int64
+	signer     imgproxy.ImgproxySigner
 	// outbox    outbox.Outbox
 	// txManager mongo.TxManager
 }
 
-func newService(store Store, cfg s3.Config, c *awss3.Client, p *awss3.PresignClient) model.ImageService {
+func newService(store Store, cfg s3.Config, c *awss3.Client, p *awss3.PresignClient, signer imgproxy.ImgproxySigner) model.ImageService {
 	return &service{
 		store:      store,
 		bucket:     cfg.Bucket,
@@ -36,6 +38,7 @@ func newService(store Store, cfg s3.Config, c *awss3.Client, p *awss3.PresignCli
 		presigner:  p,
 		presignTTL: cfg.PresignTTL,
 		maxBytes:   cfg.MaxUploadBytes,
+		signer:     signer,
 	}
 }
 
@@ -174,6 +177,29 @@ func (s *service) PromoteDraftImages(ctx context.Context, dto model.PromoteDraft
 		promoted = append(promoted, updated)
 	}
 	return promoted, nil
+}
+
+func (s *service) GetDeliveryUrl(ctx context.Context, opts model.GetDeliveryUrlDTO) (string, *time.Time, error) {
+	img, err := s.store.GetById(ctx, opts.ImageId)
+	if err != nil {
+		if errors.Is(err, errEntityNotFound) {
+			return "", nil, fmt.Errorf("image not found, id [%v]: %w", opts.ImageId, model.ErrEntityNotFound)
+		}
+		return "", nil, fmt.Errorf("failed to get image by id [%v]: %w", opts.ImageId, err)
+	}
+
+	source := fmt.Sprintf("s3://%s/%s", s.bucket, img.Key)
+
+	imgproxyURL := s.signer.BuildURL(source, imgproxy.SignerOptsDTO{
+		Width:   opts.Width,
+		Height:  opts.Height,
+		Fit:     opts.Fit,
+		Quality: opts.Quality,
+		DPR:     opts.DPR,
+		Format:  opts.Format,
+		Expires: opts.Expires,
+	})
+	return imgproxyURL, opts.Expires, nil
 }
 
 func (s *service) objectExists(ctx context.Context, key string) (bool, error) {

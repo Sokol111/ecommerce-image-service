@@ -16,8 +16,7 @@ import (
 var errEntityNotFound = errors.New("entity not found in database")
 
 type Store interface {
-
-	// GetById(ctx context.Context, id string) (*model.Image, error)
+	GetById(ctx context.Context, id string) (*model.Image, error)
 
 	Create(ctx context.Context, image *model.Image) (*model.Image, error)
 
@@ -36,6 +35,19 @@ type store struct {
 
 func newStore(wrapper *mongo.CollectionWrapper[collection]) Store {
 	return &store{wrapper}
+}
+
+func (r *store) GetById(ctx context.Context, id string) (*model.Image, error) {
+	result := r.wrapper.Coll.FindOne(ctx, bson.D{{Key: "_id", Value: id}})
+	var e entity
+	err := result.Decode(&e)
+	if err != nil {
+		if errors.Is(err, mongodriver.ErrNoDocuments) {
+			return nil, fmt.Errorf("failed to get image [%v]: %w", id, errEntityNotFound)
+		}
+		return nil, fmt.Errorf("failed to get image [%v]: decode error: %w", id, err)
+	}
+	return toDomain(&e), nil
 }
 
 func (r *store) Create(ctx context.Context, image *model.Image) (*model.Image, error) {

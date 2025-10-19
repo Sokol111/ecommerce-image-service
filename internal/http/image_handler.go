@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Sokol111/ecommerce-image-service-api/api"
 	"github.com/Sokol111/ecommerce-image-service/internal/model"
@@ -112,13 +113,45 @@ func (h *imageHandler) PromoteImages(ctx context.Context, request api.PromoteIma
 	return api.PromoteImages200JSONResponse{Promoted: &promoted}, nil
 }
 
-// DeleteImage implements api.StrictServerInterface.
-func (h *imageHandler) DeleteImage(ctx context.Context, request api.DeleteImageRequestObject) (api.DeleteImageResponseObject, error) {
-	panic("unimplemented")
+func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDeliveryUrlRequestObject) (api.GetDeliveryUrlResponseObject, error) {
+	var fit *string
+	if request.Params.Fit != nil {
+		f := string(*request.Params.Fit)
+		fit = &f
+	}
+	var format *string
+	if request.Params.Format != nil {
+		f := string(*request.Params.Format)
+		format = &f
+	}
+	var expires *time.Time
+	if request.Params.TtlSeconds != nil {
+		t := time.Now().Add(time.Duration(*request.Params.TtlSeconds) * time.Second)
+		expires = &t
+	}
+	url, expires, err := h.ImageService.GetDeliveryUrl(ctx, model.GetDeliveryUrlDTO{
+		ImageId: request.Id,
+		Width:   request.Params.W,
+		Height:  request.Params.H,
+		Fit:     fit,
+		Quality: request.Params.Quality,
+		DPR:     request.Params.Dpr,
+		Format:  format,
+		Expires: expires,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get delivery URL: %w", err)
+	}
+
+	response := api.GetDeliveryUrl200JSONResponse{
+		Url:       &url,
+		ExpiresAt: expires,
+	}
+	return response, nil
 }
 
-// GetDeliveryUrl implements api.StrictServerInterface.
-func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDeliveryUrlRequestObject) (api.GetDeliveryUrlResponseObject, error) {
+// DeleteImage implements api.StrictServerInterface.
+func (h *imageHandler) DeleteImage(ctx context.Context, request api.DeleteImageRequestObject) (api.DeleteImageResponseObject, error) {
 	panic("unimplemented")
 }
 
