@@ -54,7 +54,7 @@ func (s *service) CreateDraftPresign(ctx context.Context, dto model.CreatePresig
 		return model.CreatePresignForDraftResponseDTO{}, fmt.Errorf("unsupported content type: %s", dto.ContentType)
 	}
 
-	key := "product-drafts/" + dto.DraftId + "/" + uuid.New().String() + "." + ext
+	key := "product-drafts/" + dto.DraftId + "/" + uuid.New().String() + ext
 
 	out, err := s.presigner.PresignPutObject(ctx, &awss3.PutObjectInput{
 		Bucket:      aws.String(s.bucket),

@@ -55,6 +55,7 @@ func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUpl
 			Alt:      request.Body.Alt,
 			Key:      request.Body.Key,
 			Mime:     string(request.Body.Mime),
+			Role:     string(request.Body.Role),
 			DraftId:  request.Body.OwnerId,
 			Checksum: request.Body.Checksum,
 		})

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/fx"
 )
 
-func NewBusinessModule() fx.Option {
+func NewImageModule() fx.Option {
 	return fx.Provide(
 		provideCollection,
 		newStore,

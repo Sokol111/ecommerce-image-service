@@ -19,14 +19,14 @@ observability:
   otel-collector-endpoint: ""
 
 s3:
-  endpoint: "minio.127.0.0.1.nip.io"
+  endpoint: "http://minio.127.0.0.1.nip.io"
   region: "us-east-1"
   bucket: "products"
-  secret-key: "minioadmin"
-  access-key-id: "minioadmin123"
+  access-key-id: "minioadmin"
+  secret-key: "minioadmin123"
   use-path-style: true
 
 imgproxy:
   base-url: "imgproxy.127.0.0.1.nip.io"
-  key: "0000000000000000000000000000000000000000000000000000000000000000"
-  salt: "1111111111111111111111111111111111111111111111111111111111111111"
+  key-hex: "0000000000000000000000000000000000000000000000000000000000000000"
+  salt-hex: "1111111111111111111111111111111111111111111111111111111111111111"

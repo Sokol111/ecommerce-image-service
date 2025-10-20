@@ -10,9 +10,9 @@ import (
 )
 
 type Config struct {
-	BaseURL        string `mapstructure:"base_url"` // IMGPROXY_BASE_URL
-	KeyHex         string `mapstructure:"key"`      // IMGPROXY_KEY (hex)
-	SaltHex        string `mapstructure:"salt"`     // IMGPROXY_SALT (hex)
+	BaseURL        string `mapstructure:"base-url"` // IMGPROXY_BASE_URL
+	KeyHex         string `mapstructure:"key-hex"`  // IMGPROXY_KEY_HEX
+	SaltHex        string `mapstructure:"salt-hex"` // IMGPROXY_SALT_HEX
 	DefaultQuality int
 	Key            []byte
 	Salt           []byte
