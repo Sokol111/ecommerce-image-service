@@ -2,9 +2,11 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/Sokol111/ecommerce-commons/pkg/observability"
 	"github.com/Sokol111/ecommerce-image-service-api/api"
 	"github.com/Sokol111/ecommerce-image-service/internal/model"
 )
@@ -21,15 +23,21 @@ func newImageHandler(service model.ImageService) api.StrictServerInterface {
 
 func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePresignRequestObject) (api.CreatePresignResponseObject, error) {
 	switch request.Body.OwnerType {
-	case api.ProductDraft:
-		response, err := h.ImageService.CreateDraftPresign(ctx, model.CreatePresignForDraftDTO{
+	case api.ProductDraft, api.Product:
+		response, err := h.ImageService.CreatePresign(ctx, model.CreatePresignDTO{
 			ContentType: string(request.Body.ContentType),
 			Filename:    request.Body.Filename,
-			DraftId:     request.Body.OwnerId,
+			OwnerType:   string(request.Body.OwnerType),
+			OwnerId:     request.Body.OwnerId,
 			Size:        int64(request.Body.Size),
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to create presign URL: %w", err)
+			traceId := observability.GetTraceId(ctx)
+			return api.CreatePresign500ApplicationProblemPlusJSONResponse(api.Problem{
+				Title:   "Internal Server Error",
+				Status:  500,
+				TraceId: &traceId,
+			}), nil
 		}
 		return api.CreatePresign200JSONResponse{
 			UploadUrl:       response.UploadUrl,
@@ -37,30 +45,42 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 			ExpiresIn:       response.ExpiresIn,
 			RequiredHeaders: response.RequiredHeaders,
 		}, nil
-	case api.Product:
-		return nil, fmt.Errorf("cannot upload image for product directly, only for product draft")
-		// prefix = "products/" + request.Body.OwnerId + "/"
 	case api.User:
-		return nil, fmt.Errorf("cannot upload image for user")
-		// prefix = "uploads/pending/" + request.Body.OwnerId + "/"
+		detail := "cannot upload image for user"
+		return api.CreatePresign500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:  "Internal Server Error",
+			Detail: &detail,
+			Status: 500,
+		}), nil
 	default:
-		return nil, fmt.Errorf("unsupported ownerType: %s", request.Body.OwnerType)
+		detail := fmt.Sprintf("unsupported ownerType: %s", request.Body.OwnerType)
+		return api.CreatePresign500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:  "Internal Server Error",
+			Detail: &detail,
+			Status: 500,
+		}), nil
 	}
 }
 
 func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUploadRequestObject) (api.ConfirmUploadResponseObject, error) {
 	switch request.Body.OwnerType {
 	case api.ProductDraft:
-		var response, err = h.ImageService.ConfirmDraftUpload(ctx, model.ConfirmDraftUploadDTO{
-			Alt:      request.Body.Alt,
-			Key:      request.Body.Key,
-			Mime:     string(request.Body.Mime),
-			Role:     string(request.Body.Role),
-			DraftId:  request.Body.OwnerId,
-			Checksum: request.Body.Checksum,
+		var response, err = h.ImageService.ConfirmUpload(ctx, model.ConfirmUploadDTO{
+			Alt:       request.Body.Alt,
+			Key:       request.Body.Key,
+			Mime:      string(request.Body.Mime),
+			Role:      string(request.Body.Role),
+			OwnerType: string(request.Body.OwnerType),
+			OwnerId:   request.Body.OwnerId,
+			Checksum:  request.Body.Checksum,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to confirm upload: %w", err)
+			traceId := observability.GetTraceId(ctx)
+			return api.ConfirmUpload500ApplicationProblemPlusJSONResponse(api.Problem{
+				Title:   "Internal Server Error",
+				Status:  500,
+				TraceId: &traceId,
+			}), nil
 		}
 		return api.ConfirmUpload201JSONResponse{
 			Id:         response.Id,
@@ -76,11 +96,26 @@ func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUpl
 			ModifiedAt: response.ModifiedAt,
 		}, nil
 	case api.Product:
-		return nil, fmt.Errorf("cannot upload image for product directly, only for product draft")
+		detail := "cannot upload image for product directly, only for product draft"
+		return api.ConfirmUpload500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:  "Internal Server Error",
+			Detail: &detail,
+			Status: 500,
+		}), nil
 	case api.User:
-		return nil, fmt.Errorf("cannot upload image for user")
+		detail := "cannot upload image for user"
+		return api.ConfirmUpload500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:  "Internal Server Error",
+			Detail: &detail,
+			Status: 500,
+		}), nil
 	default:
-		return nil, fmt.Errorf("unsupported ownerType: %s", request.Body.OwnerType)
+		detail := fmt.Sprintf("unsupported ownerType: %s", request.Body.OwnerType)
+		return api.ConfirmUpload500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:  "Internal Server Error",
+			Detail: &detail,
+			Status: 500,
+		}), nil
 	}
 }
 
@@ -92,23 +127,16 @@ func (h *imageHandler) PromoteImages(ctx context.Context, request api.PromoteIma
 		ProductId: request.Body.ProductId,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to promote images: %w", err)
+		traceId := observability.GetTraceId(ctx)
+		return api.PromoteImages500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:   "Internal Server Error",
+			Status:  500,
+			TraceId: &traceId,
+		}), nil
 	}
 	promoted := make([]api.Image, 0, len(images))
 	for _, image := range images {
-		promoted = append(promoted, api.Image{
-			Id:         image.Id,
-			Alt:        image.Alt,
-			OwnerType:  api.OwnerType(image.OwnerType),
-			OwnerId:    image.OwnerId,
-			Role:       api.ImageRole(image.Role),
-			Key:        image.Key,
-			Mime:       image.Mime,
-			Size:       int(image.Size),
-			Status:     api.ImageStatus(image.Status),
-			CreatedAt:  image.CreatedAt,
-			ModifiedAt: image.ModifiedAt,
-		})
+		promoted = append(promoted, *toAPI(image))
 	}
 
 	return api.PromoteImages200JSONResponse{Promoted: &promoted}, nil
@@ -141,7 +169,12 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDelive
 		Expires: expires,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get delivery URL: %w", err)
+		traceId := observability.GetTraceId(ctx)
+		return api.GetDeliveryUrl500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:   "Internal Server Error",
+			Status:  500,
+			TraceId: &traceId,
+		}), nil
 	}
 
 	response := api.GetDeliveryUrl200JSONResponse{
@@ -151,14 +184,44 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDelive
 	return response, nil
 }
 
-// DeleteImage implements api.StrictServerInterface.
 func (h *imageHandler) DeleteImage(ctx context.Context, request api.DeleteImageRequestObject) (api.DeleteImageResponseObject, error) {
-	panic("unimplemented")
+	hard := false
+	if request.Params.Hard != nil {
+		hard = *request.Params.Hard
+	}
+	err := h.ImageService.DeleteImage(ctx, request.Id, hard)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete image [%v]: %w", request.Id, err)
+	}
+	return api.DeleteImage204Response{}, nil
 }
 
-// GetImage implements api.StrictServerInterface.
 func (h *imageHandler) GetImage(ctx context.Context, request api.GetImageRequestObject) (api.GetImageResponseObject, error) {
-	panic("unimplemented")
+	img, err := h.ImageService.GetImageById(ctx, request.Id)
+	traceId := observability.GetTraceId(ctx)
+	if err != nil {
+		if errors.Is(err, model.ErrEntityNotFound) {
+			return api.GetImage404ApplicationProblemPlusJSONResponse(api.Problem{
+				Title:   "Image not found",
+				Status:  404,
+				TraceId: &traceId,
+			}), nil
+		}
+		return api.GetImage500ApplicationProblemPlusJSONResponse(api.Problem{
+			Title:   "Internal Server Error",
+			Status:  500,
+			TraceId: &traceId,
+		}), nil
+	}
+	if img.Status == "deleted" {
+		return api.GetImage404ApplicationProblemPlusJSONResponse(
+			api.Problem{
+				Title:   "Image deleted",
+				Status:  404,
+				TraceId: &traceId,
+			}), nil
+	}
+	return api.GetImage200JSONResponse(*toAPI(img)), nil
 }
 
 // ListImages implements api.StrictServerInterface.
@@ -171,12 +234,23 @@ func (h *imageHandler) ProcessImage(ctx context.Context, request api.ProcessImag
 	panic("unimplemented")
 }
 
-// S3Webhook implements api.StrictServerInterface.
-func (h *imageHandler) S3Webhook(ctx context.Context, request api.S3WebhookRequestObject) (api.S3WebhookResponseObject, error) {
-	panic("unimplemented")
-}
-
 // UpdateImage implements api.StrictServerInterface.
 func (h *imageHandler) UpdateImage(ctx context.Context, request api.UpdateImageRequestObject) (api.UpdateImageResponseObject, error) {
 	panic("unimplemented")
+}
+
+func toAPI(img *model.Image) *api.Image {
+	return &api.Image{
+		Id:         img.Id,
+		Alt:        img.Alt,
+		OwnerType:  api.OwnerType(img.OwnerType),
+		OwnerId:    img.OwnerId,
+		Role:       api.ImageRole(img.Role),
+		Key:        img.Key,
+		Mime:       img.Mime,
+		Size:       int(img.Size),
+		Status:     api.ImageStatus(img.Status),
+		CreatedAt:  img.CreatedAt,
+		ModifiedAt: img.ModifiedAt,
+	}
 }

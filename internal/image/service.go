@@ -42,7 +42,11 @@ func newService(store Store, cfg s3.Config, c *awss3.Client, p *awss3.PresignCli
 	}
 }
 
-func (s *service) CreateDraftPresign(ctx context.Context, dto model.CreatePresignForDraftDTO) (model.CreatePresignForDraftResponseDTO, error) {
+func (s *service) GetImageById(ctx context.Context, imageId string) (*model.Image, error) {
+	return s.store.GetById(ctx, imageId)
+}
+
+func (s *service) CreatePresign(ctx context.Context, dto model.CreatePresignDTO) (model.CreatePresignResponseDTO, error) {
 	extByCT := map[string]string{
 		"image/jpeg": ".jpg",
 		"image/png":  ".png",
@@ -51,10 +55,15 @@ func (s *service) CreateDraftPresign(ctx context.Context, dto model.CreatePresig
 	}
 	ext := extByCT[strings.ToLower(dto.ContentType)]
 	if ext == "" {
-		return model.CreatePresignForDraftResponseDTO{}, fmt.Errorf("unsupported content type: %s", dto.ContentType)
+		return model.CreatePresignResponseDTO{}, fmt.Errorf("unsupported content type: %s", dto.ContentType)
 	}
 
-	key := "product-drafts/" + dto.DraftId + "/" + uuid.New().String() + ext
+	prefix, err := getPrefixByOwnerType(dto.OwnerType)
+	if err != nil {
+		return model.CreatePresignResponseDTO{}, fmt.Errorf("failed to get prefix by owner type: %w", err)
+	}
+
+	key := prefix + dto.OwnerId + "/" + uuid.New().String() + ext
 
 	out, err := s.presigner.PresignPutObject(ctx, &awss3.PutObjectInput{
 		Bucket:      aws.String(s.bucket),
@@ -62,10 +71,10 @@ func (s *service) CreateDraftPresign(ctx context.Context, dto model.CreatePresig
 		ContentType: aws.String(string(dto.ContentType)),
 	}, awss3.WithPresignExpires(s.presignTTL))
 	if err != nil {
-		return model.CreatePresignForDraftResponseDTO{}, fmt.Errorf("presign put: %w", err)
+		return model.CreatePresignResponseDTO{}, fmt.Errorf("presign put: %w", err)
 	}
 
-	return model.CreatePresignForDraftResponseDTO{
+	return model.CreatePresignResponseDTO{
 		UploadUrl: out.URL,
 		Key:       key,
 		ExpiresIn: int(s.presignTTL.Seconds()),
@@ -75,8 +84,12 @@ func (s *service) CreateDraftPresign(ctx context.Context, dto model.CreatePresig
 	}, nil
 }
 
-func (s *service) ConfirmDraftUpload(ctx context.Context, dto model.ConfirmDraftUploadDTO) (*model.Image, error) {
-	expectedPrefix := "product-drafts/" + dto.DraftId + "/"
+func (s *service) ConfirmUpload(ctx context.Context, dto model.ConfirmUploadDTO) (*model.Image, error) {
+	prefix, err := getPrefixByOwnerType(dto.OwnerType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get prefix by owner type: %w", err)
+	}
+	expectedPrefix := prefix + dto.OwnerId + "/"
 
 	if !strings.HasPrefix(dto.Key, expectedPrefix) {
 		return nil, fmt.Errorf("key does not match expected owner prefix")
@@ -107,8 +120,8 @@ func (s *service) ConfirmDraftUpload(ctx context.Context, dto model.ConfirmDraft
 	image := &model.Image{
 		Id:         uuid.New().String(),
 		Alt:        dto.Alt,
-		OwnerType:  "productDraft",
-		OwnerId:    dto.DraftId,
+		OwnerType:  dto.OwnerType,
+		OwnerId:    dto.OwnerId,
 		Role:       dto.Role,
 		Key:        dto.Key,
 		Mime:       dto.Mime,
@@ -182,10 +195,7 @@ func (s *service) PromoteDraftImages(ctx context.Context, dto model.PromoteDraft
 func (s *service) GetDeliveryUrl(ctx context.Context, opts model.GetDeliveryUrlDTO) (string, *time.Time, error) {
 	img, err := s.store.GetById(ctx, opts.ImageId)
 	if err != nil {
-		if errors.Is(err, errEntityNotFound) {
-			return "", nil, fmt.Errorf("image not found, id [%v]: %w", opts.ImageId, model.ErrEntityNotFound)
-		}
-		return "", nil, fmt.Errorf("failed to get image by id [%v]: %w", opts.ImageId, err)
+		return "", nil, fmt.Errorf("failed to get image by id: %w", err)
 	}
 
 	source := fmt.Sprintf("s3://%s/%s", s.bucket, img.Key)
@@ -200,6 +210,35 @@ func (s *service) GetDeliveryUrl(ctx context.Context, opts model.GetDeliveryUrlD
 		Expires: opts.Expires,
 	})
 	return imgproxyURL, opts.Expires, nil
+}
+
+func (s *service) DeleteImage(ctx context.Context, imageId string, hard bool) error {
+	img, err := s.store.GetById(ctx, imageId)
+	if err != nil {
+		return fmt.Errorf("failed to get image: %w", err)
+	}
+
+	_, err = s.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(img.Key),
+	})
+
+	if err != nil && !isS3NotFound(err) {
+		return fmt.Errorf("failed to delete s3 object: %w", err)
+	}
+	if hard {
+		err := s.store.Delete(ctx, imageId)
+		if err != nil {
+			return fmt.Errorf("failed to delete image from db: %w", err)
+		}
+	} else {
+		err := s.store.MarkAsDeleted(ctx, imageId)
+		if err != nil {
+			return fmt.Errorf("failed to mark image as deleted in db: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *service) objectExists(ctx context.Context, key string) (bool, error) {
@@ -232,4 +271,15 @@ func isS3NotFound(err error) bool {
 		return true
 	}
 	return false
+}
+
+func getPrefixByOwnerType(ownerType string) (string, error) {
+	switch ownerType {
+	case "productDraft":
+		return "product-drafts/", nil
+	case "product":
+		return "products/", nil
+	default:
+		return "", fmt.Errorf("unsupported owner type: %s", ownerType)
+	}
 }

@@ -21,27 +21,30 @@ type Image struct {
 	ModifiedAt time.Time
 }
 
-type CreatePresignForDraftDTO struct {
+type CreatePresignDTO struct {
 	ContentType string
 	Filename    string
-	DraftId     string
+	OwnerType   string
+	OwnerId     string
+	Role        string
 	Size        int64
 }
 
-type CreatePresignForDraftResponseDTO struct {
+type CreatePresignResponseDTO struct {
 	UploadUrl       string
 	Key             string
 	ExpiresIn       int
 	RequiredHeaders map[string]string
 }
 
-type ConfirmDraftUploadDTO struct {
-	Alt      string
-	Checksum *string
-	Key      string
-	Mime     string
-	DraftId  string
-	Role     string
+type ConfirmUploadDTO struct {
+	Alt       string
+	Checksum  *string
+	Key       string
+	Mime      string
+	OwnerType string
+	OwnerId   string
+	Role      string
 }
 
 type PromoteDraftDTO struct {
@@ -65,11 +68,15 @@ type GetDeliveryUrlDTO struct {
 var ErrEntityNotFound = errors.New("entity not found")
 
 type ImageService interface {
-	CreateDraftPresign(ctx context.Context, dto CreatePresignForDraftDTO) (CreatePresignForDraftResponseDTO, error)
+	CreatePresign(ctx context.Context, dto CreatePresignDTO) (CreatePresignResponseDTO, error)
 
-	ConfirmDraftUpload(ctx context.Context, dto ConfirmDraftUploadDTO) (*Image, error)
+	ConfirmUpload(ctx context.Context, dto ConfirmUploadDTO) (*Image, error)
 
 	PromoteDraftImages(ctx context.Context, dto PromoteDraftDTO) ([]*Image, error)
 
 	GetDeliveryUrl(ctx context.Context, opts GetDeliveryUrlDTO) (string, *time.Time, error)
+
+	DeleteImage(ctx context.Context, imageId string, hard bool) error
+
+	GetImageById(ctx context.Context, imageId string) (*Image, error)
 }

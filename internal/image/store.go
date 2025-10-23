@@ -13,8 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var errEntityNotFound = errors.New("entity not found in database")
-
 type Store interface {
 	GetById(ctx context.Context, id string) (*model.Image, error)
 
@@ -23,6 +21,10 @@ type Store interface {
 	ListByOwner(ctx context.Context, ownerType string, ownerId string, ids []string) ([]*model.Image, error)
 
 	UpdateAfterPromote(ctx context.Context, imageID string, newOwnerType string, newOwnerID string, newKey string) (*model.Image, error)
+
+	MarkAsDeleted(ctx context.Context, imageId string) error
+
+	Delete(ctx context.Context, imageId string) error
 
 	// Update(ctx context.Context, product *model.Image) (*model.Image, error)
 
@@ -43,7 +45,7 @@ func (r *store) GetById(ctx context.Context, id string) (*model.Image, error) {
 	err := result.Decode(&e)
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, fmt.Errorf("failed to get image [%v]: %w", id, errEntityNotFound)
+			return nil, fmt.Errorf("failed to get image [%v]: %w", id, model.ErrEntityNotFound)
 		}
 		return nil, fmt.Errorf("failed to get image [%v]: decode error: %w", id, err)
 	}
@@ -110,7 +112,7 @@ func (s *store) UpdateAfterPromote(ctx context.Context, imageID string, newOwner
 	err := s.wrapper.Coll.FindOneAndUpdate(ctx, bson.M{"_id": imageID}, update, opts).Decode(&out)
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, errEntityNotFound
+			return nil, model.ErrEntityNotFound
 		}
 		var we mongodriver.WriteException
 		if errors.As(err, &we) {
@@ -126,6 +128,16 @@ func (s *store) UpdateAfterPromote(ctx context.Context, imageID string, newOwner
 		return nil, fmt.Errorf("failed to update image after promote: %w", err)
 	}
 	return toDomain(&out), nil
+}
+
+func (r *store) MarkAsDeleted(ctx context.Context, imageId string) error {
+	_, err := r.wrapper.Coll.UpdateOne(ctx, bson.M{"_id": imageId}, bson.M{"$set": bson.M{"status": "deleted", "updatedAt": time.Now().UTC()}})
+	return err
+}
+
+func (r *store) Delete(ctx context.Context, imageId string) error {
+	_, err := r.wrapper.Coll.DeleteOne(ctx, bson.M{"_id": imageId})
+	return err
 }
 
 func toDomain(e *entity) *model.Image {

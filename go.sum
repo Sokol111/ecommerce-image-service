@@ -13,8 +13,8 @@ github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA
 github.com/Microsoft/hcsshim v0.11.5 h1:haEcLNpj9Ka1gd3B3tAEs9CpE0c+1IhoL59w/exYU38=
 github.com/Microsoft/hcsshim v0.11.5/go.mod h1:MV8xMfmECjl5HdO7U/3/hFVnkmSBjAjmA09d4bExKcU=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
-github.com/Sokol111/ecommerce-image-service-api v1.0.10 h1:LoazdlVv34vaJ5ByWxFzaLUyQ/2ip65z0669v9gkfVs=
-github.com/Sokol111/ecommerce-image-service-api v1.0.10/go.mod h1:XmIysz6Si3CNcmQd+3BYwC7u35g74TijFptitmQrfRA=
+github.com/Sokol111/ecommerce-image-service-api v1.0.16 h1:cUc4W0T24K7oMe6i21+kEjImd7TLF0Ei3rEJOG327yE=
+github.com/Sokol111/ecommerce-image-service-api v1.0.16/go.mod h1:XmIysz6Si3CNcmQd+3BYwC7u35g74TijFptitmQrfRA=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0 h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ=

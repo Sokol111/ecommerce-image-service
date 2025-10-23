@@ -10,8 +10,16 @@ mongo:
   database: "image"
   direct-connection: true
 
-# kafka:
-#   brokers: "localhost:9092"
+kafka:
+  brokers: "localhost:9092"
+  consumers-config:
+    group-id: "ecommerce-image-service"
+    auto-offset-reset: "earliest"
+    consumers:
+      - handler: "productCreatedHandler"
+        topic: "catalog.product.created.v1"
+      # - handler: "productUpdatedHandler"
+      #   topic: "catalog.product.updated.v1"
 
 observability:
   tracing-enabled: true

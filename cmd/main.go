@@ -14,7 +14,7 @@ import (
 
 var AppModules = fx.Options(
 	module.NewInfraModule(),
-	// module.NewKafkaModule(),
+	module.NewKafkaModule(),
 	s3.NewS3Module(),
 	image.NewImageModule(),
 	imgproxy.NewImgProxyModule(),
