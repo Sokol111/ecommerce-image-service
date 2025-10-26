@@ -3,22 +3,43 @@ package main
 import (
 	"context"
 
-	"github.com/Sokol111/ecommerce-commons/pkg/module"
+	"github.com/Sokol111/ecommerce-commons/pkg/modules"
+	"github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
+	"github.com/Sokol111/ecommerce-image-service-api/api"
+	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/http"
-	"github.com/Sokol111/ecommerce-image-service/internal/image"
-	"github.com/Sokol111/ecommerce-image-service/internal/imgproxy"
-	"github.com/Sokol111/ecommerce-image-service/internal/s3"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/imgproxy"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/s3"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/messaging"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/persistence/mongo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 var AppModules = fx.Options(
-	module.NewInfraModule(),
-	module.NewKafkaModule(),
+	// Infrastructure - Core
+	modules.NewCoreModule(),
+	modules.NewPersistenceModule(),
+	modules.NewHTTPModule(),
+	modules.NewObservabilityModule(),
+	modules.NewMessagingModule(),
+
+	// Infrastructure - External Services
 	s3.NewS3Module(),
-	image.NewImageModule(),
 	imgproxy.NewImgProxyModule(),
+
+	// Infrastructure - Persistence
+	mongo.Module(),
+
+	// Infrastructure - Messaging
+	messaging.Module(),
+
+	// Application Layer
+	application.Module(),
+
+	// HTTP
 	http.NewHttpHandlerModule(),
+	swaggerui.NewSwaggerModule(swaggerui.SwaggerConfig{OpenAPIContent: api.OpenAPIDoc}),
 )
 
 func main() {

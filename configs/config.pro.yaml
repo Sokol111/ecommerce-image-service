@@ -16,3 +16,7 @@ kafka:
 observability:
   tracing-enabled: true
   otel-collector-endpoint: ""
+
+application:
+  presign-ttl: 15m # Presigned URL validity duration
+  max-upload-bytes: 5242880 # 5 MB - maximum upload size

@@ -26,6 +26,10 @@ observability:
   metrics-enabled: false
   otel-collector-endpoint: ""
 
+application:
+  presign-ttl: 15m # Presigned URL validity duration
+  max-upload-bytes: 5242880 # 5 MB - maximum upload size
+
 s3:
   endpoint: "http://minio.127.0.0.1.nip.io"
   region: "us-east-1"
