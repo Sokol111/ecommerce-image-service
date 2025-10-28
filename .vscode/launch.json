@@ -15,6 +15,17 @@
                 "PATH": "/usr/local/go/bin:/home/ihsokolo/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             },
             "args": []
+        },
+        {
+            "name": "Attach to K3D (image-service)",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "remotePath": "/src/svc",
+            "port": 2349,
+            "host": "localhost",
+            "showLog": true,
+            "trace": "verbose"
         }
     ]
 }
