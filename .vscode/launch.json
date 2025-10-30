@@ -21,11 +21,21 @@
             "type": "go",
             "request": "attach",
             "mode": "remote",
-            "remotePath": "/src/svc",
+            "remotePath": "/app",
             "port": 2349,
             "host": "localhost",
             "showLog": true,
-            "trace": "verbose"
+            "trace": "verbose",
+            "substitutePath": [
+                {
+                    "from": "${workspaceFolder}",
+                    "to": "/src/svc"
+                },
+                {
+                    "from": "${workspaceFolder}/../ecommerce-commons",
+                    "to": "/src/ecommerce-commons"
+                }
+            ]
         }
     ]
 }
