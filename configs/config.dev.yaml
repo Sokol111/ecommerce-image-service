@@ -9,6 +9,9 @@ mongo:
   port: 27017
   database: "image"
   replica-set: rs0
+  migrations:
+    enabled: true
+    auto-migrate: true
 
 # kafka:
 #   brokers: "kafka:29092"
