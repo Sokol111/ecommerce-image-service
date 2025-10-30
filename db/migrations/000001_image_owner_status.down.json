@@ -1,0 +1,9 @@
+[
+    {
+        "dropIndexes": "image",
+        "index": "image_owner_status_v1",
+        "writeConcern": {
+            "w": "majority"
+        }
+    }
+]

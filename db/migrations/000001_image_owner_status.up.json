@@ -1,11 +1,13 @@
 [
     {
-        "createIndexes": "product",
+        "createIndexes": "image",
         "indexes": [
             {
-                "name": "product_createdAt_v1",
+                "name": "image_owner_status_v1",
                 "key": {
-                    "createdAt": 1
+                    "ownerType": 1,
+                    "ownerId": 1,
+                    "status": 1
                 }
             }
         ],

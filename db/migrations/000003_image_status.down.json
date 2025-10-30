@@ -1,7 +1,7 @@
 [
     {
-        "dropIndexes": "product",
-        "index": "product_createdAt_v1",
+        "dropIndexes": "image",
+        "index": "image_status_v1",
         "writeConcern": {
             "w": "majority"
         }

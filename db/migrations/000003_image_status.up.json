@@ -1,0 +1,17 @@
+[
+    {
+        "createIndexes": "image",
+        "indexes": [
+            {
+                "name": "image_status_v1",
+                "key": {
+                    "status": 1
+                }
+            }
+        ],
+        "commitQuorum": "majority",
+        "writeConcern": {
+            "w": "majority"
+        }
+    }
+]
