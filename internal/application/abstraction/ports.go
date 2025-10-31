@@ -2,6 +2,7 @@ package abstraction
 
 import (
 	"context"
+	"time"
 )
 
 // Storage abstractions define contracts for external storage dependencies.
@@ -51,4 +52,20 @@ type ObjectStorage interface {
 	DeleteObject(ctx context.Context, input *DeleteObjectInput) error
 	CopyObject(ctx context.Context, input *CopyObjectInput) error
 	GetBucket() string
+}
+
+// SignerOptions contains parameters for building image transformation URLs
+type SignerOptions struct {
+	Width   *int
+	Height  *int
+	Fit     *string // fit | fill | fill-down | force | auto
+	Quality *int    // 1..100
+	DPR     *float32
+	Format  *string    // webp | avif | jpeg | png | "" (original)
+	Expires *time.Time // expiration time for signed URLs
+}
+
+// ImgproxySigner builds signed URLs for image transformation service
+type ImgproxySigner interface {
+	BuildURL(source string, opts SignerOptions) string
 }

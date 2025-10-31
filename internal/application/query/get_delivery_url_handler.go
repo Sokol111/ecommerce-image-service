@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
+	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"go.uber.org/zap"
 )
@@ -33,35 +34,17 @@ type GetDeliveryURLQueryHandler interface {
 	Handle(ctx context.Context, query GetDeliveryURLQuery) (*GetDeliveryURLResult, error)
 }
 
-type ImgproxySigner interface {
-	BuildURL(source string, opts SignerOptions) string
-}
-
-type SignerOptions struct {
-	Width   *int
-	Height  *int
-	Fit     *string
-	Quality *int
-	DPR     *float32
-	Format  *string
-	Expires *time.Time
-}
-
 type getDeliveryURLHandler struct {
-	repo     image.Repository
-	signer   ImgproxySigner
-	s3Config S3Config
+	repo   image.Repository
+	signer abstraction.ImgproxySigner
+	bucket string
 }
 
-type S3Config interface {
-	GetBucket() string
-}
-
-func NewGetDeliveryURLHandler(repo image.Repository, signer ImgproxySigner, cfg S3Config) GetDeliveryURLQueryHandler {
+func NewGetDeliveryURLHandler(repo image.Repository, signer abstraction.ImgproxySigner, bucket string) GetDeliveryURLQueryHandler {
 	return &getDeliveryURLHandler{
-		repo:     repo,
-		signer:   signer,
-		s3Config: cfg,
+		repo:   repo,
+		signer: signer,
+		bucket: bucket,
 	}
 }
 
@@ -73,10 +56,10 @@ func (h *getDeliveryURLHandler) Handle(ctx context.Context, query GetDeliveryURL
 	}
 
 	// Build source URL for imgproxy
-	source := fmt.Sprintf("s3://%s/%s", h.s3Config.GetBucket(), img.Key)
+	source := fmt.Sprintf("s3://%s/%s", h.bucket, img.Key)
 
 	// Build imgproxy URL
-	imgproxyURL := h.signer.BuildURL(source, SignerOptions{
+	imgproxyURL := h.signer.BuildURL(source, abstraction.SignerOptions{
 		Width:   query.Width,
 		Height:  query.Height,
 		Fit:     query.Fit,

@@ -7,22 +7,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 )
-
-type SignerOptions struct {
-	Width   *int
-	Height  *int
-	Fit     *string // fit | fill | fill-down | force | auto
-	Quality *int    // 1..100
-	DPR     *float32
-	Format  *string    // webp | avif | jpeg | png | "" (оригінал)
-	Expires *time.Time // якщо хочеш "exp:unix"
-}
-
-type ImgproxySigner interface {
-	BuildURL(source string, opts SignerOptions) string
-}
 
 type signer struct {
 	baseURL string
@@ -30,7 +17,7 @@ type signer struct {
 	salt    []byte
 }
 
-func newImgproxySigner(cfg Config) (ImgproxySigner, error) {
+func newImgproxySigner(cfg Config) (abstraction.ImgproxySigner, error) {
 	return &signer{
 		baseURL: cfg.BaseURL,
 		key:     cfg.Key,
@@ -38,7 +25,7 @@ func newImgproxySigner(cfg Config) (ImgproxySigner, error) {
 	}, nil
 }
 
-func (s *signer) BuildURL(source string, opts SignerOptions) string {
+func (s *signer) BuildURL(source string, opts abstraction.SignerOptions) string {
 	// 1) Processing options
 	var parts []string
 
