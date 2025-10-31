@@ -37,14 +37,12 @@ type GetDeliveryURLQueryHandler interface {
 type getDeliveryURLHandler struct {
 	repo   image.Repository
 	signer abstraction.ImgproxySigner
-	bucket string
 }
 
-func NewGetDeliveryURLHandler(repo image.Repository, signer abstraction.ImgproxySigner, bucket string) GetDeliveryURLQueryHandler {
+func NewGetDeliveryURLHandler(repo image.Repository, signer abstraction.ImgproxySigner) GetDeliveryURLQueryHandler {
 	return &getDeliveryURLHandler{
 		repo:   repo,
 		signer: signer,
-		bucket: bucket,
 	}
 }
 
@@ -55,11 +53,8 @@ func (h *getDeliveryURLHandler) Handle(ctx context.Context, query GetDeliveryURL
 		return nil, fmt.Errorf("failed to get image by id: %w", err)
 	}
 
-	// Build source URL for imgproxy
-	source := fmt.Sprintf("s3://%s/%s", h.bucket, img.Key)
-
-	// Build imgproxy URL
-	imgproxyURL := h.signer.BuildURL(source, abstraction.SignerOptions{
+	// Build imgproxy URL (infrastructure layer handles S3 source formatting)
+	imgproxyURL := h.signer.BuildURL(img.Key, abstraction.SignerOptions{
 		Width:   query.Width,
 		Height:  query.Height,
 		Fit:     query.Fit,

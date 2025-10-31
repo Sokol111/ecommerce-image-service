@@ -13,20 +13,25 @@ import (
 
 type signer struct {
 	baseURL string
+	bucket  string
 	key     []byte
 	salt    []byte
 }
 
-func newImgproxySigner(cfg Config) (abstraction.ImgproxySigner, error) {
+func newImgproxySigner(cfg Config, bucket string) (abstraction.ImgproxySigner, error) {
 	return &signer{
 		baseURL: cfg.BaseURL,
+		bucket:  bucket,
 		key:     cfg.Key,
 		salt:    cfg.Salt,
 	}, nil
 }
 
-func (s *signer) BuildURL(source string, opts abstraction.SignerOptions) string {
-	// 1) Processing options
+func (s *signer) BuildURL(key string, opts abstraction.SignerOptions) string {
+	// 1) Build S3 source URL (s3://bucket/key)
+	source := fmt.Sprintf("s3://%s/%s", s.bucket, key)
+
+	// 2) Processing options
 	var parts []string
 
 	// rs (resize meta): rs:%type:%w:%h
@@ -54,11 +59,11 @@ func (s *signer) BuildURL(source string, opts abstraction.SignerOptions) string 
 		parts = append(parts, fmt.Sprintf("exp:%d", opts.Expires.Unix()))
 	}
 
-	// 2) Source (plain). Для MinIO/S3: s3://bucket/key
+	// 3) Source (plain) from S3 URL
 	processing := "/" + strings.Join(parts, "/")
 	src := "/plain/" + source
 
-	// 3) Extension (@format) — опційно
+	// 4) Extension (@format) — опційно
 	suffix := ""
 	if opts.Format != nil && *opts.Format != "" {
 		ext := strings.TrimPrefix(strings.ToLower(*opts.Format), ".")
@@ -71,7 +76,7 @@ func (s *signer) BuildURL(source string, opts abstraction.SignerOptions) string 
 		}
 	}
 
-	// 4) Підписуємо повний path (починається з /)
+	// 5) Підписуємо повний path (починається з /)
 	path := processing + src + suffix
 	sig := s.sign(path)
 

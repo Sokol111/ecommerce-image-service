@@ -80,7 +80,7 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 	return &CreatePresignResult{
 		UploadURL: out.URL,
 		Key:       key,
-		ExpiresIn: h.presigner.GetPresignTTLSeconds(),
+		ExpiresIn: out.TTLSeconds,
 		RequiredHeaders: map[string]string{
 			"Content-Type": cmd.ContentType,
 		},

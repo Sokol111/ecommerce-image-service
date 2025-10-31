@@ -16,13 +16,13 @@ type PresignPutObjectInput struct {
 
 // PresignPutObjectOutput contains the result of presigning
 type PresignPutObjectOutput struct {
-	URL string
+	URL        string
+	TTLSeconds int
 }
 
 // Presigner creates presigned URLs for uploading objects
 type Presigner interface {
 	PresignPutObject(ctx context.Context, input *PresignPutObjectInput) (*PresignPutObjectOutput, error)
-	GetPresignTTLSeconds() int
 }
 
 // HeadObjectInput contains parameters for checking object metadata
@@ -42,8 +42,8 @@ type DeleteObjectInput struct {
 
 // CopyObjectInput contains parameters for copying an object
 type CopyObjectInput struct {
-	Key        string
-	CopySource string
+	SourceKey string
+	TargetKey string
 }
 
 // ObjectStorage provides operations for object storage
@@ -51,7 +51,6 @@ type ObjectStorage interface {
 	HeadObject(ctx context.Context, input *HeadObjectInput) (*HeadObjectOutput, error)
 	DeleteObject(ctx context.Context, input *DeleteObjectInput) error
 	CopyObject(ctx context.Context, input *CopyObjectInput) error
-	GetBucket() string
 }
 
 // SignerOptions contains parameters for building image transformation URLs
@@ -67,5 +66,5 @@ type SignerOptions struct {
 
 // ImgproxySigner builds signed URLs for image transformation service
 type ImgproxySigner interface {
-	BuildURL(source string, opts SignerOptions) string
+	BuildURL(key string, opts SignerOptions) string
 }

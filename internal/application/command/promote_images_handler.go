@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
@@ -71,10 +70,9 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 
 		// Copy object if doesn't exist
 		if !exists {
-			copySource := url.PathEscape(h.objStorage.GetBucket() + "/" + img.Key)
 			err = h.objStorage.CopyObject(ctx, &abstraction.CopyObjectInput{
-				Key:        dstKey,
-				CopySource: copySource,
+				SourceKey: img.Key,
+				TargetKey: dstKey,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("copy %s -> %s: %w", img.Key, dstKey, err)

@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"errors"
+	"net/url"
 
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -16,8 +17,8 @@ type objectStorage struct {
 	bucket string
 }
 
-// NewObjectStorage creates a new ObjectStorage implementation
-func NewObjectStorage(client *s3.Client, cfg Config) abstraction.ObjectStorage {
+// newObjectStorage creates a new ObjectStorage implementation
+func newObjectStorage(client *s3.Client, cfg Config) abstraction.ObjectStorage {
 	return &objectStorage{
 		client: client,
 		bucket: cfg.Bucket,
@@ -51,16 +52,15 @@ func (o *objectStorage) DeleteObject(ctx context.Context, input *abstraction.Del
 }
 
 func (o *objectStorage) CopyObject(ctx context.Context, input *abstraction.CopyObjectInput) error {
+	// Build S3-specific CopySource in format "bucket/key"
+	copySource := url.PathEscape(o.bucket + "/" + input.SourceKey)
+
 	_, err := o.client.CopyObject(ctx, &s3.CopyObjectInput{
 		Bucket:     aws.String(o.bucket),
-		Key:        aws.String(input.Key),
-		CopySource: aws.String(input.CopySource),
+		Key:        aws.String(input.TargetKey),
+		CopySource: aws.String(copySource),
 	})
 	return err
-}
-
-func (o *objectStorage) GetBucket() string {
-	return o.bucket
 }
 
 func isS3NotFound(err error) bool {

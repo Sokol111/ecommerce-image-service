@@ -16,8 +16,8 @@ type presigner struct {
 	ttl    time.Duration
 }
 
-// NewPresigner creates a new Presigner implementation
-func NewPresigner(client *s3.PresignClient, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
+// newPresigner creates a new Presigner implementation
+func newPresigner(client *s3.PresignClient, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
 	return &presigner{
 		client: client,
 		bucket: s3Cfg.Bucket,
@@ -36,10 +36,7 @@ func (p *presigner) PresignPutObject(ctx context.Context, input *abstraction.Pre
 	}
 
 	return &abstraction.PresignPutObjectOutput{
-		URL: out.URL,
+		URL:        out.URL,
+		TTLSeconds: int(p.ttl.Seconds()),
 	}, nil
-}
-
-func (p *presigner) GetPresignTTLSeconds() int {
-	return int(p.ttl.Seconds())
 }

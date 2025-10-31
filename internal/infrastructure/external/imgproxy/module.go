@@ -1,10 +1,15 @@
 package imgproxy
 
-import "go.uber.org/fx"
+import (
+	"go.uber.org/fx"
+)
 
 func NewImgProxyModule() fx.Option {
 	return fx.Provide(
 		newConfig,
-		newImgproxySigner,
+		fx.Annotate(
+			newImgproxySigner,
+			fx.ParamTags(``, `name:"s3Bucket"`),
+		),
 	)
 }

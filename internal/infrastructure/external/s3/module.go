@@ -18,8 +18,12 @@ func NewS3Module() fx.Option {
 		newAWSConfig,       // aws.Config
 		newS3Client,        // *s3.Client
 		newS3PresignClient, // *s3.PresignClient
-		NewPresigner,       // command.Presigner (uses application.Config)
-		NewObjectStorage,   // command.ObjectStorage (uses Config)
+		newPresigner,       // abstraction.Presigner (uses application.Config)
+		newObjectStorage,   // abstraction.ObjectStorage (uses Config)
+		fx.Annotate(
+			func(cfg Config) string { return cfg.Bucket },
+			fx.ResultTags(`name:"s3Bucket"`),
+		),
 	)
 }
 
