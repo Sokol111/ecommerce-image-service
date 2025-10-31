@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/s3"
 )
 
 type signer struct {
@@ -18,10 +19,10 @@ type signer struct {
 	salt    []byte
 }
 
-func newImgproxySigner(cfg Config, bucket string) (abstraction.ImgproxySigner, error) {
+func newImgproxySigner(cfg Config, s3cfg s3.Config) (abstraction.ImgproxySigner, error) {
 	return &signer{
 		baseURL: cfg.BaseURL,
-		bucket:  bucket,
+		bucket:  s3cfg.Bucket,
 		key:     cfg.Key,
 		salt:    cfg.Salt,
 	}, nil

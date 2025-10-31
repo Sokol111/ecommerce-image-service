@@ -20,14 +20,10 @@ func NewS3Module() fx.Option {
 		newS3PresignClient, // *s3.PresignClient
 		newPresigner,       // abstraction.Presigner (uses application.Config)
 		newObjectStorage,   // abstraction.ObjectStorage (uses Config)
-		fx.Annotate(
-			func(cfg Config) string { return cfg.Bucket },
-			fx.ResultTags(`name:"s3Bucket"`),
-		),
 	)
 }
 
-func newAWSConfig(_ fx.Lifecycle, cfg Config) (aws.Config, error) {
+func newAWSConfig(cfg Config) (aws.Config, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			MaxIdleConns:        cfg.MaxIdleConns,

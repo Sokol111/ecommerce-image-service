@@ -1,8 +1,10 @@
 package application
 
 import (
+	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
+	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"go.uber.org/fx"
 )
 
@@ -12,18 +14,13 @@ func Module() fx.Option {
 		// Config
 		fx.Provide(
 			NewConfig,
-			fx.Annotate(
-				newMaxUploadBytes,
-				fx.ResultTags(`name:"maxUploadBytes"`),
-			),
 		),
 		// Command handlers
 		fx.Provide(
 			command.NewCreatePresignHandler,
-			fx.Annotate(
-				command.NewConfirmUploadHandler,
-				fx.ParamTags(``, ``, `name:"maxUploadBytes"`),
-			),
+			func(repo image.Repository, storage abstraction.ObjectStorage, cfg Config) command.ConfirmUploadCommandHandler {
+				return command.NewConfirmUploadHandler(repo, storage, cfg.MaxUploadBytes)
+			},
 			command.NewPromoteImagesHandler,
 			command.NewDeleteImageHandler,
 		),
@@ -33,8 +30,4 @@ func Module() fx.Option {
 			query.NewGetDeliveryURLHandler,
 		),
 	)
-}
-
-func newMaxUploadBytes(cfg Config) int64 {
-	return cfg.MaxUploadBytes
 }
