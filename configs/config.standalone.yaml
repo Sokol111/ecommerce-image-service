@@ -31,7 +31,7 @@ application:
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
 
 s3:
-  endpoint: "http://minio:9000"
+  endpoint: "http://localhost:9000"
   public-endpoint: "http://localhost:9000"
   region: "us-east-1"
   bucket: "products"
@@ -40,6 +40,6 @@ s3:
   use-path-style: true
 
 imgproxy:
-  base-url: "http://imgproxy:8080"
+  base-url: "http://localhost:8081"
   key-hex: "0000000000000000000000000000000000000000000000000000000000000000"
   salt-hex: "1111111111111111111111111111111111111111111111111111111111111111"

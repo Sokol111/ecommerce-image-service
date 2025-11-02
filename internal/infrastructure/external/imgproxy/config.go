@@ -10,9 +10,9 @@ import (
 )
 
 type Config struct {
-	BaseURL        string `mapstructure:"base-url"` // IMGPROXY_BASE_URL
-	KeyHex         string `mapstructure:"key-hex"`  // IMGPROXY_KEY_HEX
-	SaltHex        string `mapstructure:"salt-hex"` // IMGPROXY_SALT_HEX
+	PublicBaseURL  string `mapstructure:"public-base-url"` // IMGPROXY_PUBLIC_BASE_URL
+	KeyHex         string `mapstructure:"key-hex"`         // IMGPROXY_KEY_HEX
+	SaltHex        string `mapstructure:"salt-hex"`        // IMGPROXY_SALT_HEX
 	DefaultQuality int
 	Key            []byte
 	Salt           []byte
@@ -23,10 +23,10 @@ func newConfig(v *viper.Viper) (Config, error) {
 	if err := v.Sub("imgproxy").UnmarshalExact(&cfg); err != nil {
 		return cfg, fmt.Errorf("failed to load imgproxy config: %w", err)
 	}
-	if cfg.BaseURL == "" {
-		return cfg, errors.New("imgproxy base URL is required")
+	if cfg.PublicBaseURL == "" {
+		return cfg, errors.New("imgproxy public base URL is required")
 	}
-	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
+	cfg.PublicBaseURL = strings.TrimRight(cfg.PublicBaseURL, "/")
 
 	key, err := hex.DecodeString(cfg.KeyHex)
 	if err != nil {

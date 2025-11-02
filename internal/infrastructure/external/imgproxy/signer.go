@@ -13,18 +13,18 @@ import (
 )
 
 type signer struct {
-	baseURL string
-	bucket  string
-	key     []byte
-	salt    []byte
+	publicBaseURL string
+	bucket        string
+	key           []byte
+	salt          []byte
 }
 
 func newImgproxySigner(cfg Config, s3cfg s3.Config) (abstraction.ImgproxySigner, error) {
 	return &signer{
-		baseURL: cfg.BaseURL,
-		bucket:  s3cfg.Bucket,
-		key:     cfg.Key,
-		salt:    cfg.Salt,
+		publicBaseURL: cfg.PublicBaseURL,
+		bucket:        s3cfg.Bucket,
+		key:           cfg.Key,
+		salt:          cfg.Salt,
 	}, nil
 }
 
@@ -81,7 +81,7 @@ func (s *signer) BuildURL(key string, opts abstraction.SignerOptions) string {
 	path := processing + src + suffix
 	sig := s.sign(path)
 
-	return s.baseURL + "/" + sig + path
+	return s.publicBaseURL + "/" + sig + path
 }
 
 func (s *signer) sign(path string) string {

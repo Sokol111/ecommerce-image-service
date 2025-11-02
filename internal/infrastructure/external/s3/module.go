@@ -66,6 +66,35 @@ func newS3Client(cfg Config, awsCfg aws.Config) *s3.Client {
 	return s3.NewFromConfig(awsCfg, opts)
 }
 
-func newS3PresignClient(c *s3.Client) *s3.PresignClient {
-	return s3.NewPresignClient(c)
+func newS3PresignClient(cfg Config, awsCfg aws.Config) *s3.PresignClient {
+	// Use public endpoint for presigned URLs if configured, otherwise use regular endpoint
+	endpoint := cfg.Endpoint
+	if cfg.PublicEndpoint != "" {
+		endpoint = cfg.PublicEndpoint
+	}
+
+	opts := []func(*s3.PresignOptions){
+		func(po *s3.PresignOptions) {
+			po.ClientOptions = append(po.ClientOptions, func(o *s3.Options) {
+				if endpoint != "" {
+					o.BaseEndpoint = aws.String(endpoint)
+				}
+				if cfg.UsePathStyle {
+					o.UsePathStyle = true
+				}
+			})
+		},
+	}
+
+	// Create a separate client for presigning with public endpoint
+	client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+		if endpoint != "" {
+			o.BaseEndpoint = aws.String(endpoint)
+		}
+		if cfg.UsePathStyle {
+			o.UsePathStyle = true
+		}
+	})
+
+	return s3.NewPresignClient(client, opts...)
 }
