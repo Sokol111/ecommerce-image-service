@@ -38,6 +38,7 @@ application:
 
 s3:
   endpoint: "http://minio:9000"
+  public-endpoint: "http://localhost:9000"
   region: "us-east-1"
   bucket: "products"
   access-key-id: "minioadmin"

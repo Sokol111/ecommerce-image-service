@@ -9,12 +9,13 @@ import (
 
 type Config struct {
 	// Core
-	Bucket       string `mapstructure:"bucket"`         // Target bucket (e.g., "products")
-	Region       string `mapstructure:"region"`         // e.g., "us-east-1"; MinIO accepts any non-empty value
-	Endpoint     string `mapstructure:"endpoint"`       // e.g., "http://minio.minio.svc.cluster.local:9000" or leave empty for AWS S3
-	UsePathStyle bool   `mapstructure:"use-path-style"` // MinIO: true; AWS S3: false
-	AccessKeyID  string `mapstructure:"access-key-id"`  // MinIO/AWS access key
-	SecretKey    string `mapstructure:"secret-key"`     // MinIO/AWS secret key
+	Bucket         string `mapstructure:"bucket"`          // Target bucket (e.g., "products")
+	Region         string `mapstructure:"region"`          // e.g., "us-east-1"; MinIO accepts any non-empty value
+	Endpoint       string `mapstructure:"endpoint"`        // e.g., "http://minio:9000" or leave empty for AWS S3
+	PublicEndpoint string `mapstructure:"public-endpoint"` // e.g., "http://localhost:9000" - endpoint for browser-accessible presigned URLs
+	UsePathStyle   bool   `mapstructure:"use-path-style"`  // MinIO: true; AWS S3: false
+	AccessKeyID    string `mapstructure:"access-key-id"`   // MinIO/AWS access key
+	SecretKey      string `mapstructure:"secret-key"`      // MinIO/AWS secret key
 
 	// Client tuning
 	HTTPTimeout         time.Duration // default 30s if zero

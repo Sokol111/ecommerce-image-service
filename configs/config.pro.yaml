@@ -20,3 +20,17 @@ observability:
 application:
   presign-ttl: 15m # Presigned URL validity duration
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
+
+s3:
+  endpoint: "" # Leave empty for AWS S3
+  public-endpoint: "" # Not needed for AWS S3, URLs are already public
+  region: "us-east-1"
+  bucket: "products"
+  access-key-id: ""
+  secret-key: ""
+  use-path-style: false # AWS S3 uses virtual-hosted-style
+
+imgproxy:
+  base-url: ""
+  key-hex: ""
+  salt-hex: ""
