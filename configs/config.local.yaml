@@ -30,7 +30,6 @@ observability:
   metrics-enabled: false
   metrics-interval: 10s
   otel-collector-endpoint: "otel-collector-opentelemetry-collector.observability.svc:4317"
-  prometheus-endpoint: "prometheus-server.observability.svc:9090"
 
 application:
   presign-ttl: 15m # Presigned URL validity duration
