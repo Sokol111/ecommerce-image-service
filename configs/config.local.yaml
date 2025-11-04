@@ -14,7 +14,7 @@ mongo:
     auto-migrate: true
 
 kafka:
-  brokers: "localhost:9092"
+  brokers: "kafka:29092"
   consumers-config:
     group-id: "ecommerce-image-service"
     auto-offset-reset: "earliest"
