@@ -10,7 +10,7 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/http"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/imgproxy"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/s3"
-	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/messaging"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/messaging/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/persistence/mongo"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,7 +32,7 @@ var AppModules = fx.Options(
 	mongo.Module(),
 
 	// Infrastructure - Messaging
-	messaging.Module(),
+	kafka.Module(),
 
 	// Application Layer
 	application.Module(),
