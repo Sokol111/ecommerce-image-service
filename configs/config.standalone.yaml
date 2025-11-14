@@ -11,15 +11,16 @@ mongo:
   direct-connection: true
 
 kafka:
-  brokers: "localhost:9092"
+  brokers: "localhost:29092"
+  schema-registry:
+    url: "http://localhost:8084"
+    cache-capacity: 1000
   consumers-config:
     group-id: "ecommerce-image-service"
     auto-offset-reset: "earliest"
     consumers:
-      - handler: "productCreatedHandler"
-        topic: "catalog.product.created.v1"
-      # - handler: "productUpdatedHandler"
-      #   topic: "catalog.product.updated.v1"
+      - name: "product-events"
+        topic: "catalog.product.events"
 
 observability:
   tracing-enabled: true
