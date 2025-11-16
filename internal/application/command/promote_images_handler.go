@@ -41,14 +41,28 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 		imageIDs = *cmd.ImageIDs
 	}
 
-	// Get images from repository
+	// Validate draft exists and belongs to productDraft owner type
+	draftImages, err := h.repo.FindByOwner(ctx, "productDraft", cmd.DraftID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("validate draft exists: %w", err)
+	}
+	if len(draftImages) == 0 {
+		return nil, fmt.Errorf("draft %s not found or has no images", cmd.DraftID)
+	}
+
+	// Get images to promote (either specified or all)
 	images, err := h.repo.FindByOwner(ctx, "productDraft", cmd.DraftID, imageIDs)
 	if err != nil {
 		return nil, fmt.Errorf("list draft images: %w", err)
 	}
 
 	if len(images) == 0 {
-		return []*image.Image{}, fmt.Errorf("no images found for draft %s", cmd.DraftID)
+		return nil, fmt.Errorf("no images found for promotion")
+	}
+
+	// Validate all specified imageIDs were found
+	if imageIDs != nil && len(imageIDs) != len(images) {
+		return nil, fmt.Errorf("some specified image IDs not found in draft %s", cmd.DraftID)
 	}
 
 	var promoted []*image.Image
@@ -62,14 +76,20 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 		// Determine new key
 		dstKey := "products/" + cmd.ProductID + "/" + strings.TrimPrefix(img.Key, srcPrefix)
 
-		// Check if target already exists
+		// Check if target already exists to prevent overwriting
 		exists, err := h.objectExists(ctx, dstKey)
 		if err != nil {
 			return nil, fmt.Errorf("check target exists: %w", err)
 		}
 
-		// Copy object if doesn't exist
-		if !exists {
+		if exists {
+			h.log(ctx).Warn("target object already exists, skipping copy",
+				zap.String("dstKey", dstKey),
+				zap.String("imageID", img.ID),
+			)
+			// Continue to update DB even if object exists (idempotency)
+		} else {
+			// Copy object
 			err = h.objStorage.CopyObject(ctx, &abstraction.CopyObjectInput{
 				SourceKey: img.Key,
 				TargetKey: dstKey,
@@ -77,12 +97,19 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 			if err != nil {
 				return nil, fmt.Errorf("copy %s -> %s: %w", img.Key, dstKey, err)
 			}
+			h.log(ctx).Debug("object copied", zap.String("from", img.Key), zap.String("to", dstKey))
 		}
 
 		// Delete old object
-		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
+		if err := h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
 			Key: img.Key,
-		})
+		}); err != nil {
+			// Log error but continue - object in new location already exists
+			h.log(ctx).Warn("failed to delete old object after copy",
+				zap.String("key", img.Key),
+				zap.Error(err),
+			)
+		}
 
 		// Update domain object
 		if err := img.PromoteToProduct(cmd.ProductID, dstKey); err != nil {

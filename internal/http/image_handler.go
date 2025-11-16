@@ -57,9 +57,8 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 		}
 
 		return api.CreatePresign200JSONResponse{
-			UploadUrl: result.UploadURL,
-			// UploadToken:     result.UploadToken, // TODO: Uncomment after updating API package to v1.0.22+
-			Key:             result.UploadToken, // TEMPORARY: Using Key field for uploadToken until API is updated
+			UploadUrl:       result.UploadURL,
+			UploadToken:     result.UploadToken,
 			ExpiresIn:       result.ExpiresIn,
 			RequiredHeaders: result.RequiredHeaders,
 		}, nil
@@ -73,14 +72,11 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 }
 
 func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUploadRequestObject) (api.ConfirmUploadResponseObject, error) {
-	// TODO: Update after regenerating API package with uploadToken field
-	uploadToken := request.Body.Key // TEMPORARY: Key field used for uploadToken
-
 	cmd := command.ConfirmUploadCommand{
-		UploadToken: uploadToken,
+		UploadToken: request.Body.UploadToken,
 		Alt:         request.Body.Alt,
 		Role:        string(request.Body.Role),
-		Checksum:    nil,
+		Checksum:    request.Body.Checksum,
 	}
 
 	img, err := h.confirmUploadHandler.Handle(ctx, cmd)
@@ -157,8 +153,8 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDelive
 	}
 
 	response := api.GetDeliveryUrl200JSONResponse{
-		Url:       &result.URL,
-		ExpiresAt: result.ExpiresAt,
+		Url:       result.URL,
+		ExpiresAt: *result.ExpiresAt,
 	}
 	return response, nil
 }
