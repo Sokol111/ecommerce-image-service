@@ -49,10 +49,6 @@ func main() {
 		AppModules,
 		fx.Invoke(func(lc fx.Lifecycle, log *zap.Logger) {
 			lc.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					log.Info("Application starting...")
-					return nil
-				},
 				OnStop: func(ctx context.Context) error {
 					log.Info("Application stopping...")
 					return nil
