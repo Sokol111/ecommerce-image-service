@@ -154,7 +154,7 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDelive
 
 	response := api.GetDeliveryUrl200JSONResponse{
 		Url:       result.URL,
-		ExpiresAt: *result.ExpiresAt,
+		ExpiresAt: result.ExpiresAt,
 	}
 	return response, nil
 }
