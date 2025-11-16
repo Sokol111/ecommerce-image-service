@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
@@ -13,13 +12,10 @@ import (
 
 // ConfirmUploadCommand represents a request to confirm an image upload
 type ConfirmUploadCommand struct {
-	Alt       string
-	Checksum  *string
-	Key       string
-	Mime      string
-	OwnerType string
-	OwnerID   string
-	Role      string
+	UploadToken string
+	Alt         string
+	Checksum    *string
+	Role        string
 }
 
 // ConfirmUploadCommandHandler handles ConfirmUploadCommand
@@ -30,32 +26,29 @@ type ConfirmUploadCommandHandler interface {
 type confirmUploadHandler struct {
 	repo           image.Repository
 	objStorage     abstraction.ObjectStorage
+	tokenService   abstraction.TokenService
 	maxUploadBytes int64
 }
 
-func NewConfirmUploadHandler(repo image.Repository, storage abstraction.ObjectStorage, maxUploadBytes int64) ConfirmUploadCommandHandler {
+func NewConfirmUploadHandler(repo image.Repository, storage abstraction.ObjectStorage, tokenService abstraction.TokenService, maxUploadBytes int64) ConfirmUploadCommandHandler {
 	return &confirmUploadHandler{
 		repo:           repo,
 		objStorage:     storage,
+		tokenService:   tokenService,
 		maxUploadBytes: maxUploadBytes,
 	}
 }
 
 func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadCommand) (*image.Image, error) {
-	// Validate key matches expected owner prefix
-	prefix, err := getPrefixByOwnerType(cmd.OwnerType)
+	// Validate and extract claims from upload token
+	claims, err := h.tokenService.ValidateUploadToken(ctx, cmd.UploadToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get prefix by owner type: %w", err)
-	}
-	expectedPrefix := prefix + cmd.OwnerID + "/"
-
-	if !strings.HasPrefix(cmd.Key, expectedPrefix) {
-		return nil, fmt.Errorf("key does not match expected owner prefix")
+		return nil, fmt.Errorf("invalid upload token: %w", err)
 	}
 
 	// Verify object exists in S3
 	ho, err := h.objStorage.HeadObject(ctx, &abstraction.HeadObjectInput{
-		Key: cmd.Key,
+		Key: claims.Key,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("head object: %w", err)
@@ -66,16 +59,28 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 		size = *ho.ContentLength
 	}
 
-	// Validate size
+	// Validate size matches expected size from token
+	if claims.Size > 0 && size != claims.Size {
+		h.log(ctx).Warn("uploaded file size mismatch",
+			zap.Int64("expected", claims.Size),
+			zap.Int64("actual", size),
+			zap.String("key", claims.Key),
+		)
+	}
+
+	// Validate size limit
 	if h.maxUploadBytes > 0 && size > h.maxUploadBytes {
 		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
-			Key: cmd.Key,
+			Key: claims.Key,
 		})
 		return nil, fmt.Errorf("file too large: max %d bytes", h.maxUploadBytes)
 	}
 
-	// Create domain image
-	img, err := image.NewImage(cmd.Alt, cmd.OwnerType, cmd.OwnerID, cmd.Role, cmd.Key, cmd.Mime, size)
+	// Extract content type from token (S3 doesn't return ContentType in HeadObject in our abstraction)
+	mime := claims.ContentType
+
+	// Create domain image with data from validated token
+	img, err := image.NewImage(cmd.Alt, claims.OwnerType, claims.OwnerID, claims.Role, claims.Key, mime, size)
 	if err != nil {
 		return nil, fmt.Errorf("create image: %w", err)
 	}
@@ -85,7 +90,12 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 		return nil, fmt.Errorf("save image: %w", err)
 	}
 
-	h.log(ctx).Debug("image upload confirmed", zap.String("id", img.ID), zap.String("key", img.Key))
+	h.log(ctx).Debug("image upload confirmed",
+		zap.String("id", img.ID),
+		zap.String("key", img.Key),
+		zap.String("ownerType", claims.OwnerType),
+		zap.String("ownerId", claims.OwnerID),
+	)
 
 	return img, nil
 }

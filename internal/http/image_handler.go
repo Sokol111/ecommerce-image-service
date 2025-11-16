@@ -57,8 +57,9 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 		}
 
 		return api.CreatePresign200JSONResponse{
-			UploadUrl:       result.UploadURL,
-			Key:             result.Key,
+			UploadUrl: result.UploadURL,
+			// UploadToken:     result.UploadToken, // TODO: Uncomment after updating API package to v1.0.22+
+			Key:             result.UploadToken, // TEMPORARY: Using Key field for uploadToken until API is updated
 			ExpiresIn:       result.ExpiresIn,
 			RequiredHeaders: result.RequiredHeaders,
 		}, nil
@@ -72,46 +73,34 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 }
 
 func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUploadRequestObject) (api.ConfirmUploadResponseObject, error) {
-	switch request.Body.OwnerType {
-	case api.ProductDraft:
-		cmd := command.ConfirmUploadCommand{
-			Alt:       request.Body.Alt,
-			Key:       request.Body.Key,
-			Mime:      string(request.Body.Mime),
-			Role:      string(request.Body.Role),
-			OwnerType: string(request.Body.OwnerType),
-			OwnerID:   request.Body.OwnerId,
-			Checksum:  request.Body.Checksum,
-		}
+	// TODO: Update after regenerating API package with uploadToken field
+	uploadToken := request.Body.Key // TEMPORARY: Key field used for uploadToken
 
-		img, err := h.confirmUploadHandler.Handle(ctx, cmd)
-		if err != nil {
-			return nil, fmt.Errorf("failed to confirm upload: %w", err)
-		}
-
-		return api.ConfirmUpload201JSONResponse{
-			Id:         img.ID,
-			Alt:        img.Alt,
-			OwnerType:  api.OwnerType(img.OwnerType),
-			OwnerId:    img.OwnerID,
-			Role:       api.ImageRole(img.Role),
-			Key:        img.Key,
-			Mime:       img.Mime,
-			Size:       int(img.Size),
-			Status:     api.ImageStatus(img.Status),
-			CreatedAt:  img.CreatedAt,
-			ModifiedAt: img.ModifiedAt,
-		}, nil
-
-	case api.Product:
-		return nil, fmt.Errorf("unsupported ownerType: %s", request.Body.OwnerType)
-
-	case api.User:
-		return nil, fmt.Errorf("unsupported ownerType: %s", request.Body.OwnerType)
-
-	default:
-		return nil, fmt.Errorf("unsupported ownerType: %s", request.Body.OwnerType)
+	cmd := command.ConfirmUploadCommand{
+		UploadToken: uploadToken,
+		Alt:         request.Body.Alt,
+		Role:        string(request.Body.Role),
+		Checksum:    nil,
 	}
+
+	img, err := h.confirmUploadHandler.Handle(ctx, cmd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to confirm upload: %w", err)
+	}
+
+	return api.ConfirmUpload201JSONResponse{
+		Id:         img.ID,
+		Alt:        img.Alt,
+		OwnerType:  api.OwnerType(img.OwnerType),
+		OwnerId:    img.OwnerID,
+		Role:       api.ImageRole(img.Role),
+		Key:        img.Key,
+		Mime:       img.Mime,
+		Size:       int(img.Size),
+		Status:     api.ImageStatus(img.Status),
+		CreatedAt:  img.CreatedAt,
+		ModifiedAt: img.ModifiedAt,
+	}, nil
 }
 
 func (h *imageHandler) PromoteImages(ctx context.Context, request api.PromoteImagesRequestObject) (api.PromoteImagesResponseObject, error) {

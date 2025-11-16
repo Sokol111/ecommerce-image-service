@@ -37,6 +37,7 @@ observability:
 application:
   presign-ttl: 15m # Presigned URL validity duration
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
+  jwt-secret: "dev-secret-key-change-in-production-min-32-chars-long!"
 
 s3:
   endpoint: "http://minio:9000"

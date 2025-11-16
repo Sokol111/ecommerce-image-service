@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
@@ -24,7 +25,7 @@ type CreatePresignCommand struct {
 // CreatePresignResult contains the presigned URL and metadata
 type CreatePresignResult struct {
 	UploadURL       string
-	Key             string
+	UploadToken     string
 	ExpiresIn       int
 	RequiredHeaders map[string]string
 }
@@ -35,12 +36,16 @@ type CreatePresignCommandHandler interface {
 }
 
 type createPresignHandler struct {
-	presigner abstraction.Presigner
+	presigner    abstraction.Presigner
+	tokenService abstraction.TokenService
+	presignTTL   time.Duration
 }
 
-func NewCreatePresignHandler(presigner abstraction.Presigner) CreatePresignCommandHandler {
+func NewCreatePresignHandler(presigner abstraction.Presigner, tokenService abstraction.TokenService, presignTTL time.Duration) CreatePresignCommandHandler {
 	return &createPresignHandler{
-		presigner: presigner,
+		presigner:    presigner,
+		tokenService: tokenService,
+		presignTTL:   presignTTL,
 	}
 }
 
@@ -75,12 +80,25 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 		return nil, fmt.Errorf("presign put: %w", err)
 	}
 
+	// Generate signed JWT token with upload metadata
+	uploadToken, err := h.tokenService.GenerateUploadToken(ctx, &abstraction.UploadTokenClaims{
+		Key:         key,
+		OwnerType:   cmd.OwnerType,
+		OwnerID:     cmd.OwnerID,
+		Role:        cmd.Role,
+		ContentType: cmd.ContentType,
+		Size:        cmd.Size,
+	}, h.presignTTL)
+	if err != nil {
+		return nil, fmt.Errorf("generate upload token: %w", err)
+	}
+
 	h.log(ctx).Debug("presigned URL created", zap.String("key", key))
 
 	return &CreatePresignResult{
-		UploadURL: out.URL,
-		Key:       key,
-		ExpiresIn: out.TTLSeconds,
+		UploadURL:   out.URL,
+		UploadToken: uploadToken,
+		ExpiresIn:   out.TTLSeconds,
 		RequiredHeaders: map[string]string{
 			"Content-Type": cmd.ContentType,
 		},

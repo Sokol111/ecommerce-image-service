@@ -14,6 +14,9 @@ type Config struct {
 
 	// MaxUploadBytes is the maximum allowed file upload size in bytes
 	MaxUploadBytes int64 `mapstructure:"max-upload-bytes"`
+
+	// JWTSecret is the secret key used to sign upload tokens
+	JWTSecret string `mapstructure:"jwt-secret"`
 }
 
 // NewConfig creates a new application config from Viper
@@ -29,6 +32,9 @@ func NewConfig(v *viper.Viper) (Config, error) {
 	}
 	if cfg.MaxUploadBytes == 0 {
 		cfg.MaxUploadBytes = 5 * 1024 * 1024 // 5 MB default
+	}
+	if cfg.JWTSecret == "" {
+		return cfg, fmt.Errorf("jwt-secret is required")
 	}
 
 	return cfg, nil

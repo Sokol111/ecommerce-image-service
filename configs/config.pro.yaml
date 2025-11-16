@@ -20,6 +20,7 @@ observability:
 application:
   presign-ttl: 15m # Presigned URL validity duration
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
+  jwt-secret: "${JWT_SECRET}" # Must be set via environment variable
 
 s3:
   endpoint: "" # Leave empty for AWS S3

@@ -17,9 +17,11 @@ func Module() fx.Option {
 		),
 		// Command handlers
 		fx.Provide(
-			command.NewCreatePresignHandler,
-			func(repo image.Repository, storage abstraction.ObjectStorage, cfg Config) command.ConfirmUploadCommandHandler {
-				return command.NewConfirmUploadHandler(repo, storage, cfg.MaxUploadBytes)
+			func(presigner abstraction.Presigner, tokenService abstraction.TokenService, cfg Config) command.CreatePresignCommandHandler {
+				return command.NewCreatePresignHandler(presigner, tokenService, cfg.PresignTTL)
+			},
+			func(repo image.Repository, storage abstraction.ObjectStorage, tokenService abstraction.TokenService, cfg Config) command.ConfirmUploadCommandHandler {
+				return command.NewConfirmUploadHandler(repo, storage, tokenService, cfg.MaxUploadBytes)
 			},
 			command.NewPromoteImagesHandler,
 			command.NewDeleteImageHandler,

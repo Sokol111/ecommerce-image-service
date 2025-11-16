@@ -12,6 +12,7 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/s3"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/messaging/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/persistence/mongo"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/security"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -27,6 +28,7 @@ var AppModules = fx.Options(
 	// Infrastructure - External Services
 	s3.NewS3Module(),
 	imgproxy.NewImgProxyModule(),
+	security.NewSecurityModule(),
 
 	// Infrastructure - Persistence
 	mongo.Module(),
