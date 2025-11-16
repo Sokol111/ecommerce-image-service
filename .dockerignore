@@ -1,6 +1,6 @@
 *
 
-!cmd
+!cmd/main.go
 !configs
 !internal
 !pkg
