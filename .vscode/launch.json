@@ -21,7 +21,7 @@
             "type": "go",
             "request": "attach",
             "mode": "remote",
-            "remotePath": "/app",
+            "remotePath": "/src/svc",
             "port": 2349,
             "host": "localhost",
             "showLog": true,
