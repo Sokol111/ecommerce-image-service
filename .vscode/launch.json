@@ -28,11 +28,11 @@
             "trace": "verbose",
             "substitutePath": [
                 {
-                    "from": "${workspaceFolder}",
+                    "from": "/home/ihsokolo/projects/ecommerce/ecommerce-image-service",
                     "to": "/src/svc"
                 },
                 {
-                    "from": "${workspaceFolder}/../ecommerce-commons",
+                    "from": "/home/ihsokolo/projects/ecommerce/ecommerce-commons",
                     "to": "/src/ecommerce-commons"
                 }
             ]
