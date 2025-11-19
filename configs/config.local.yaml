@@ -16,7 +16,7 @@ mongo:
 kafka:
   brokers: "kafka:29092"
   schema-registry:
-    url: "http://schema-registry:8084"
+    url: "http://schema-registry:8081"
     cache-capacity: 1000
   consumers-config:
     group-id: "ecommerce-image-service"
