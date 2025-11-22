@@ -143,5 +143,5 @@ func (h *promoteImagesHandler) objectExists(ctx context.Context, key string) (bo
 }
 
 func (h *promoteImagesHandler) log(ctx context.Context) *zap.Logger {
-	return logger.FromContext(ctx).With(zap.String("component", "promote-images-handler"))
+	return logger.Get(ctx).With(zap.String("component", "promote-images-handler"))
 }

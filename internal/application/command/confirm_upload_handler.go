@@ -101,5 +101,5 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 }
 
 func (h *confirmUploadHandler) log(ctx context.Context) *zap.Logger {
-	return logger.FromContext(ctx).With(zap.String("component", "confirm-upload-handler"))
+	return logger.Get(ctx).With(zap.String("component", "confirm-upload-handler"))
 }

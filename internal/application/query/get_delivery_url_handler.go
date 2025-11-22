@@ -73,5 +73,5 @@ func (h *getDeliveryURLHandler) Handle(ctx context.Context, query GetDeliveryURL
 }
 
 func (h *getDeliveryURLHandler) log(ctx context.Context) *zap.Logger {
-	return logger.FromContext(ctx).With(zap.String("component", "get-delivery-url-handler"))
+	return logger.Get(ctx).With(zap.String("component", "get-delivery-url-handler"))
 }

@@ -59,5 +59,5 @@ func (h *productHandler) handleProductCreated(ctx context.Context, e *events.Pro
 }
 
 func (h *productHandler) log(ctx context.Context) *zap.Logger {
-	return logger.FromContext(ctx).With(zap.String("component", "product-handler"))
+	return logger.Get(ctx).With(zap.String("component", "product-handler"))
 }

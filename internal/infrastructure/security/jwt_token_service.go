@@ -50,7 +50,7 @@ func (s *jwtTokenService) GenerateUploadToken(ctx context.Context, claims *abstr
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	logger.FromContext(ctx).Debug("generated upload token",
+	logger.Get(ctx).Debug("generated upload token",
 		zap.String("key", claims.Key),
 		zap.String("ownerType", claims.OwnerType),
 		zap.String("ownerId", claims.OwnerID),
@@ -83,7 +83,7 @@ func (s *jwtTokenService) ValidateUploadToken(ctx context.Context, tokenString s
 		return nil, fmt.Errorf("token expired")
 	}
 
-	logger.FromContext(ctx).Debug("validated upload token",
+	logger.Get(ctx).Debug("validated upload token",
 		zap.String("key", claims.UploadTokenClaims.Key),
 		zap.String("ownerType", claims.UploadTokenClaims.OwnerType),
 		zap.String("ownerId", claims.UploadTokenClaims.OwnerID),

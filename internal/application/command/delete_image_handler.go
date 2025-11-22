@@ -73,5 +73,5 @@ func (h *deleteImageHandler) Handle(ctx context.Context, cmd DeleteImageCommand)
 }
 
 func (h *deleteImageHandler) log(ctx context.Context) *zap.Logger {
-	return logger.FromContext(ctx).With(zap.String("component", "delete-image-handler"))
+	return logger.Get(ctx).With(zap.String("component", "delete-image-handler"))
 }

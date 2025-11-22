@@ -106,7 +106,7 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 }
 
 func (h *createPresignHandler) log(ctx context.Context) *zap.Logger {
-	return logger.FromContext(ctx).With(zap.String("component", "create-presign-handler"))
+	return logger.Get(ctx).With(zap.String("component", "create-presign-handler"))
 }
 
 func getPrefixByOwnerType(ownerType string) (string, error) {
