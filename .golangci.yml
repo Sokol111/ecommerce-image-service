@@ -1,10 +1,5 @@
-# This file uses shared golangci-lint configuration from ecommerce-infrastructure
-# 
-# Base configuration: https://github.com/Sokol111/ecommerce-infrastructure/blob/master/configs/golangci/base.yml
-# Service additions: https://github.com/Sokol111/ecommerce-infrastructure/blob/master/configs/golangci/service.yml
-#
-# Local file is used because golangci-lint doesn't support remote config extends yet.
-# To update: copy from ecommerce-infrastructure/configs/golangci/
+# Service-specific golangci-lint configuration
+# Services have slightly relaxed rules compared to libraries
 
 linters:
   enable:
@@ -37,6 +32,10 @@ linters:
     # Style
     - revive
     - stylecheck
+    - misspell
+    
+    # Complexity
+    - gocyclo
 
 linters-settings:
   exhaustive:
@@ -74,6 +73,9 @@ linters-settings:
     excludes:
       - G104
   
+  gocyclo:
+    min-complexity: 20  # Services can have slightly higher complexity
+  
   stylecheck:
     checks: ["all", "-ST1000", "-ST1003"]
 
@@ -84,6 +86,7 @@ issues:
         - errcheck
         - gosec
         - revive
+        - gocyclo  # Test functions often have high complexity
     
     - path: ".*\\.gen\\.go$"
       linters:
