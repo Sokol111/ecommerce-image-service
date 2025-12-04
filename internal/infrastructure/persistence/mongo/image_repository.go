@@ -13,17 +13,20 @@ type imageRepository struct {
 	coll commonsmongo.Collection
 }
 
-func newImageRepository(mongo commonsmongo.Mongo, mapper *imageMapper) image.Repository {
-	coll := mongo.GetCollectionWrapper("image")
-	genericRepo := commonsmongo.NewGenericRepository(
+func newImageRepository(mongo commonsmongo.Mongo, mapper *imageMapper) (image.Repository, error) {
+	coll := mongo.GetCollection("image")
+	genericRepo, err := commonsmongo.NewGenericRepository(
 		coll,
 		mapper,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &imageRepository{
 		GenericRepository: genericRepo,
 		coll:              coll,
-	}
+	}, nil
 }
 
 // FindByOwner finds images by owner type and ID
