@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Sokol111/ecommerce-commons/pkg/observability"
+	"github.com/Sokol111/ecommerce-commons/pkg/observability/tracing"
 	"github.com/Sokol111/ecommerce-image-service-api/api"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
@@ -187,7 +187,7 @@ func (h *imageHandler) GetImage(ctx context.Context, request api.GetImageRequest
 
 	if err != nil {
 		if errors.Is(err, image.ErrImageNotFound) {
-			traceId := observability.GetTraceId(ctx)
+			traceId := tracing.GetTraceID(ctx)
 			return api.GetImage404ApplicationProblemPlusJSONResponse(api.Problem{
 				Title:   "Image not found",
 				Status:  404,
@@ -198,7 +198,7 @@ func (h *imageHandler) GetImage(ctx context.Context, request api.GetImageRequest
 	}
 
 	if img.IsDeleted() {
-		traceId := observability.GetTraceId(ctx)
+		traceId := tracing.GetTraceID(ctx)
 		return api.GetImage404ApplicationProblemPlusJSONResponse(
 			api.Problem{
 				Title:   "Image deleted",
