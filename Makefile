@@ -64,7 +64,8 @@ fmt: ## Format code with gofmt and goimports
 	@if command -v goimports >/dev/null 2>&1; then \
 		goimports -w .; \
 	else \
-		echo "$(COLOR_YELLOW)goimports not installed, skipping...$(COLOR_RESET)"; \
+		echo "$(COLOR_YELLOW)goimports not installed. Install: go install golang.org/x/tools/cmd/goimports@latest$(COLOR_RESET)"; \
+		exit 1; \
 	fi
 
 .PHONY: lint
@@ -74,6 +75,7 @@ lint: ## Run golangci-lint (includes vet, errcheck, staticcheck, etc.)
 		golangci-lint run --timeout=5m; \
 	else \
 		echo "$(COLOR_YELLOW)golangci-lint not installed. Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest$(COLOR_RESET)"; \
+		exit 1; \
 	fi
 
 .PHONY: check-all
@@ -148,6 +150,7 @@ vuln-check: ## Check for known vulnerabilities
 		govulncheck ./...; \
 	else \
 		echo "$(COLOR_YELLOW)govulncheck not installed. Install: go install golang.org/x/vuln/cmd/govulncheck@latest$(COLOR_RESET)"; \
+		exit 1; \
 	fi
 
 .PHONY: sec-scan
@@ -158,15 +161,17 @@ sec-scan: ## Run security scanner (gosec)
 		gosec ./...; \
 	else \
 		echo "$(COLOR_YELLOW)gosec not installed. Install: go install github.com/securego/gosec/v2/cmd/gosec@latest$(COLOR_RESET)"; \
+		exit 1; \
 	fi
 
 .PHONY: license-check
 license-check: ## Check licenses of dependencies
 	@echo "$(COLOR_GREEN)Checking licenses...$(COLOR_RESET)"
 	@if command -v go-licenses >/dev/null 2>&1; then \
-		go-licenses check ./... 2>/dev/null || true; \
+		go-licenses report ./...; \
 	else \
 		echo "$(COLOR_YELLOW)go-licenses not installed. Install: go install github.com/google/go-licenses@latest$(COLOR_RESET)"; \
+		exit 1; \
 	fi
 
 # =============================================================================
