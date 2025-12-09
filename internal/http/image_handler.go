@@ -214,6 +214,57 @@ func (h *imageHandler) ListImages(ctx context.Context, request api.ListImagesReq
 	panic("unimplemented")
 }
 
+func (h *imageHandler) GetDeliveryUrls(ctx context.Context, request api.GetDeliveryUrlsRequestObject) (api.GetDeliveryUrlsResponseObject, error) {
+	var fit *string
+	if request.Body.Fit != nil {
+		f := string(*request.Body.Fit)
+		fit = &f
+	}
+	var format *string
+	if request.Body.Format != nil {
+		f := string(*request.Body.Format)
+		format = &f
+	}
+
+	urls := make([]api.ImageUrl, 0, len(request.Body.ImageIds))
+	notFound := make([]string, 0)
+
+	for _, imageID := range request.Body.ImageIds {
+		q := query.GetDeliveryURLQuery{
+			ImageID: imageID,
+			Width:   request.Body.W,
+			Height:  request.Body.H,
+			Fit:     fit,
+			Quality: request.Body.Quality,
+			Format:  format,
+		}
+
+		result, err := h.getDeliveryURLHandler.Handle(ctx, q)
+		if err != nil {
+			if errors.Is(err, image.ErrImageNotFound) {
+				notFound = append(notFound, imageID)
+				continue
+			}
+			return nil, fmt.Errorf("failed to get delivery URL for image [%s]: %w", imageID, err)
+		}
+
+		urls = append(urls, api.ImageUrl{
+			ImageId:   imageID,
+			Url:       result.URL,
+			ExpiresAt: result.ExpiresAt,
+		})
+	}
+
+	response := api.GetDeliveryUrls200JSONResponse{
+		Urls: urls,
+	}
+	if len(notFound) > 0 {
+		response.NotFound = &notFound
+	}
+
+	return response, nil
+}
+
 func (h *imageHandler) ProcessImage(ctx context.Context, request api.ProcessImageRequestObject) (api.ProcessImageResponseObject, error) {
 	panic("unimplemented")
 }

@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/Sokol111/ecommerce-commons v0.1.50
-	github.com/Sokol111/ecommerce-image-service-api v1.0.25
+	github.com/Sokol111/ecommerce-image-service-api v1.0.27
 	github.com/Sokol111/ecommerce-product-service-api v1.0.88
 	github.com/aws/aws-sdk-go-v2 v1.39.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.10
