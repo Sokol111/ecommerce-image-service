@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/observability/tracing"
-	"github.com/Sokol111/ecommerce-image-service-api/api"
+	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
@@ -29,7 +29,7 @@ func newImageHandler(
 	deleteImage command.DeleteImageCommandHandler,
 	getImageByID query.GetImageByIDQueryHandler,
 	getDeliveryURL query.GetDeliveryURLQueryHandler,
-) api.StrictServerInterface {
+) httpapi.StrictServerInterface {
 	return &imageHandler{
 		createPresignHandler:  createPresign,
 		confirmUploadHandler:  confirmUpload,
@@ -40,9 +40,9 @@ func newImageHandler(
 	}
 }
 
-func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePresignRequestObject) (api.CreatePresignResponseObject, error) {
+func (h *imageHandler) CreatePresign(ctx context.Context, request httpapi.CreatePresignRequestObject) (httpapi.CreatePresignResponseObject, error) {
 	switch request.Body.OwnerType {
-	case api.ProductDraft, api.Product:
+	case httpapi.ProductDraft, httpapi.Product:
 		cmd := command.CreatePresignCommand{
 			ContentType: string(request.Body.ContentType),
 			Filename:    request.Body.Filename,
@@ -56,14 +56,14 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 			return nil, fmt.Errorf("failed to create presign: %w", err)
 		}
 
-		return api.CreatePresign200JSONResponse{
+		return httpapi.CreatePresign200JSONResponse{
 			UploadUrl:       result.UploadURL,
 			UploadToken:     result.UploadToken,
 			ExpiresIn:       result.ExpiresIn,
 			RequiredHeaders: result.RequiredHeaders,
 		}, nil
 
-	case api.User:
+	case httpapi.User:
 		return nil, fmt.Errorf("unsupported ownerType: %s", request.Body.OwnerType)
 
 	default:
@@ -71,7 +71,7 @@ func (h *imageHandler) CreatePresign(ctx context.Context, request api.CreatePres
 	}
 }
 
-func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUploadRequestObject) (api.ConfirmUploadResponseObject, error) {
+func (h *imageHandler) ConfirmUpload(ctx context.Context, request httpapi.ConfirmUploadRequestObject) (httpapi.ConfirmUploadResponseObject, error) {
 	cmd := command.ConfirmUploadCommand{
 		UploadToken: request.Body.UploadToken,
 		Alt:         request.Body.Alt,
@@ -84,22 +84,22 @@ func (h *imageHandler) ConfirmUpload(ctx context.Context, request api.ConfirmUpl
 		return nil, fmt.Errorf("failed to confirm upload: %w", err)
 	}
 
-	return api.ConfirmUpload201JSONResponse{
+	return httpapi.ConfirmUpload201JSONResponse{
 		Id:         img.ID,
 		Alt:        img.Alt,
-		OwnerType:  api.OwnerType(img.OwnerType),
+		OwnerType:  httpapi.OwnerType(img.OwnerType),
 		OwnerId:    img.OwnerID,
-		Role:       api.ImageRole(img.Role),
+		Role:       httpapi.ImageRole(img.Role),
 		Key:        img.Key,
 		Mime:       img.Mime,
 		Size:       int(img.Size),
-		Status:     api.ImageStatus(img.Status),
+		Status:     httpapi.ImageStatus(img.Status),
 		CreatedAt:  img.CreatedAt,
 		ModifiedAt: img.ModifiedAt,
 	}, nil
 }
 
-func (h *imageHandler) PromoteImages(ctx context.Context, request api.PromoteImagesRequestObject) (api.PromoteImagesResponseObject, error) {
+func (h *imageHandler) PromoteImages(ctx context.Context, request httpapi.PromoteImagesRequestObject) (httpapi.PromoteImagesResponseObject, error) {
 	cmd := command.PromoteImagesCommand{
 		DraftID:   request.Body.DraftId,
 		ImageIDs:  request.Body.Images,
@@ -111,15 +111,15 @@ func (h *imageHandler) PromoteImages(ctx context.Context, request api.PromoteIma
 		return nil, fmt.Errorf("failed to promote images: %w", err)
 	}
 
-	promoted := make([]api.Image, 0, len(images))
+	promoted := make([]httpapi.Image, 0, len(images))
 	for _, img := range images {
 		promoted = append(promoted, *toAPI(img))
 	}
 
-	return api.PromoteImages200JSONResponse{Promoted: &promoted}, nil
+	return httpapi.PromoteImages200JSONResponse{Promoted: &promoted}, nil
 }
 
-func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDeliveryUrlRequestObject) (api.GetDeliveryUrlResponseObject, error) {
+func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request httpapi.GetDeliveryUrlRequestObject) (httpapi.GetDeliveryUrlResponseObject, error) {
 	var fit *string
 	if request.Params.Fit != nil {
 		f := string(*request.Params.Fit)
@@ -152,14 +152,14 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, request api.GetDelive
 		return nil, fmt.Errorf("failed to get delivery URL: %w", err)
 	}
 
-	response := api.GetDeliveryUrl200JSONResponse{
+	response := httpapi.GetDeliveryUrl200JSONResponse{
 		Url:       result.URL,
 		ExpiresAt: result.ExpiresAt,
 	}
 	return response, nil
 }
 
-func (h *imageHandler) DeleteImage(ctx context.Context, request api.DeleteImageRequestObject) (api.DeleteImageResponseObject, error) {
+func (h *imageHandler) DeleteImage(ctx context.Context, request httpapi.DeleteImageRequestObject) (httpapi.DeleteImageResponseObject, error) {
 	hard := false
 	if request.Params.Hard != nil {
 		hard = *request.Params.Hard
@@ -175,10 +175,10 @@ func (h *imageHandler) DeleteImage(ctx context.Context, request api.DeleteImageR
 		return nil, fmt.Errorf("failed to delete image [%v]: %w", request.Id, err)
 	}
 
-	return api.DeleteImage204Response{}, nil
+	return httpapi.DeleteImage204Response{}, nil
 }
 
-func (h *imageHandler) GetImage(ctx context.Context, request api.GetImageRequestObject) (api.GetImageResponseObject, error) {
+func (h *imageHandler) GetImage(ctx context.Context, request httpapi.GetImageRequestObject) (httpapi.GetImageResponseObject, error) {
 	q := query.GetImageByIDQuery{
 		ID: request.Id,
 	}
@@ -188,7 +188,7 @@ func (h *imageHandler) GetImage(ctx context.Context, request api.GetImageRequest
 	if err != nil {
 		if errors.Is(err, image.ErrImageNotFound) {
 			traceId := tracing.GetTraceID(ctx)
-			return api.GetImage404ApplicationProblemPlusJSONResponse(api.Problem{
+			return httpapi.GetImage404ApplicationProblemPlusJSONResponse(httpapi.Problem{
 				Title:   "Image not found",
 				Status:  404,
 				TraceId: &traceId,
@@ -199,22 +199,22 @@ func (h *imageHandler) GetImage(ctx context.Context, request api.GetImageRequest
 
 	if img.IsDeleted() {
 		traceId := tracing.GetTraceID(ctx)
-		return api.GetImage404ApplicationProblemPlusJSONResponse(
-			api.Problem{
+		return httpapi.GetImage404ApplicationProblemPlusJSONResponse(
+			httpapi.Problem{
 				Title:   "Image deleted",
 				Status:  404,
 				TraceId: &traceId,
 			}), nil
 	}
 
-	return api.GetImage200JSONResponse(*toAPI(img)), nil
+	return httpapi.GetImage200JSONResponse(*toAPI(img)), nil
 }
 
-func (h *imageHandler) ListImages(ctx context.Context, request api.ListImagesRequestObject) (api.ListImagesResponseObject, error) {
+func (h *imageHandler) ListImages(ctx context.Context, request httpapi.ListImagesRequestObject) (httpapi.ListImagesResponseObject, error) {
 	panic("unimplemented")
 }
 
-func (h *imageHandler) GetDeliveryUrls(ctx context.Context, request api.GetDeliveryUrlsRequestObject) (api.GetDeliveryUrlsResponseObject, error) {
+func (h *imageHandler) GetDeliveryUrls(ctx context.Context, request httpapi.GetDeliveryUrlsRequestObject) (httpapi.GetDeliveryUrlsResponseObject, error) {
 	var fit *string
 	if request.Body.Fit != nil {
 		f := string(*request.Body.Fit)
@@ -226,7 +226,7 @@ func (h *imageHandler) GetDeliveryUrls(ctx context.Context, request api.GetDeliv
 		format = &f
 	}
 
-	urls := make([]api.ImageUrl, 0, len(request.Body.ImageIds))
+	urls := make([]httpapi.ImageUrl, 0, len(request.Body.ImageIds))
 	notFound := make([]string, 0)
 
 	for _, imageID := range request.Body.ImageIds {
@@ -248,14 +248,14 @@ func (h *imageHandler) GetDeliveryUrls(ctx context.Context, request api.GetDeliv
 			return nil, fmt.Errorf("failed to get delivery URL for image [%s]: %w", imageID, err)
 		}
 
-		urls = append(urls, api.ImageUrl{
+		urls = append(urls, httpapi.ImageUrl{
 			ImageId:   imageID,
 			Url:       result.URL,
 			ExpiresAt: result.ExpiresAt,
 		})
 	}
 
-	response := api.GetDeliveryUrls200JSONResponse{
+	response := httpapi.GetDeliveryUrls200JSONResponse{
 		Urls: urls,
 	}
 	if len(notFound) > 0 {
@@ -265,25 +265,25 @@ func (h *imageHandler) GetDeliveryUrls(ctx context.Context, request api.GetDeliv
 	return response, nil
 }
 
-func (h *imageHandler) ProcessImage(ctx context.Context, request api.ProcessImageRequestObject) (api.ProcessImageResponseObject, error) {
+func (h *imageHandler) ProcessImage(ctx context.Context, request httpapi.ProcessImageRequestObject) (httpapi.ProcessImageResponseObject, error) {
 	panic("unimplemented")
 }
 
-func (h *imageHandler) UpdateImage(ctx context.Context, request api.UpdateImageRequestObject) (api.UpdateImageResponseObject, error) {
+func (h *imageHandler) UpdateImage(ctx context.Context, request httpapi.UpdateImageRequestObject) (httpapi.UpdateImageResponseObject, error) {
 	panic("unimplemented")
 }
 
-func toAPI(img *image.Image) *api.Image {
-	return &api.Image{
+func toAPI(img *image.Image) *httpapi.Image {
+	return &httpapi.Image{
 		Id:         img.ID,
 		Alt:        img.Alt,
-		OwnerType:  api.OwnerType(img.OwnerType),
+		OwnerType:  httpapi.OwnerType(img.OwnerType),
 		OwnerId:    img.OwnerID,
-		Role:       api.ImageRole(img.Role),
+		Role:       httpapi.ImageRole(img.Role),
 		Key:        img.Key,
 		Mime:       img.Mime,
 		Size:       int(img.Size),
-		Status:     api.ImageStatus(img.Status),
+		Status:     httpapi.ImageStatus(img.Status),
 		CreatedAt:  img.CreatedAt,
 		ModifiedAt: img.ModifiedAt,
 	}

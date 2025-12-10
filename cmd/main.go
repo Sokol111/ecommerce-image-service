@@ -5,7 +5,7 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/modules"
 	"github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
-	"github.com/Sokol111/ecommerce-image-service-api/api"
+	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/http"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/external/imgproxy"
@@ -41,7 +41,7 @@ var AppModules = fx.Options(
 
 	// HTTP
 	http.NewHttpHandlerModule(),
-	swaggerui.NewSwaggerModule(swaggerui.SwaggerConfig{OpenAPIContent: api.OpenAPIDoc}),
+	swaggerui.NewSwaggerModule(swaggerui.SwaggerConfig{OpenAPIContent: httpapi.OpenAPIDoc}),
 )
 
 func main() {
