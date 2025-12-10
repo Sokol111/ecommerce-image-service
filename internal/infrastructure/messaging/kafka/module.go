@@ -3,7 +3,7 @@ package kafka
 import (
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/avro/mapping"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/consumer"
-	"github.com/Sokol111/ecommerce-product-service-api/events"
+	"github.com/Sokol111/ecommerce-product-service-api/gen/events"
 	"go.uber.org/fx"
 )
 
