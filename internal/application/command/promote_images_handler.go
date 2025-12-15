@@ -277,8 +277,8 @@ func (h *promoteImagesHandler) sendOutboxMessages(ctx context.Context, sends []o
 
 func (h *promoteImagesHandler) buildImageURL(key string) string {
 	w := 400
-	fit := "fit"
-	return h.signer.BuildURL(key, abstraction.SignerOptions{Width: &w, Fit: &fit})
+	quality := 85
+	return h.signer.BuildURL(key, abstraction.SignerOptions{Width: &w, Quality: &quality})
 }
 
 func (h *promoteImagesHandler) log(ctx context.Context) *zap.Logger {
