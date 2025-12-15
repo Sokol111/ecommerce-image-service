@@ -23,7 +23,3 @@ bin/
 # Go workspace file
 go.work
 go.work.sum
-
-.idea/
-Dockerfile.temp
-go-service.mk
