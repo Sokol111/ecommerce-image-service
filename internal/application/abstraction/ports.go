@@ -50,7 +50,10 @@ type CopyObjectInput struct {
 type ObjectStorage interface {
 	HeadObject(ctx context.Context, input *HeadObjectInput) (*HeadObjectOutput, error)
 	DeleteObject(ctx context.Context, input *DeleteObjectInput) error
+	DeleteObjects(ctx context.Context, keys []string) error
 	CopyObject(ctx context.Context, input *CopyObjectInput) error
+	// ObjectExists checks if an object exists at the given key.
+	ObjectExists(ctx context.Context, key string) (bool, error)
 }
 
 // SignerOptions contains parameters for building image transformation URLs

@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
 )
 
@@ -51,6 +52,28 @@ func (o *objectStorage) DeleteObject(ctx context.Context, input *abstraction.Del
 	return err
 }
 
+func (o *objectStorage) DeleteObjects(ctx context.Context, keys []string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	objects := make([]types.ObjectIdentifier, len(keys))
+	for i, key := range keys {
+		objects[i] = types.ObjectIdentifier{
+			Key: aws.String(key),
+		}
+	}
+
+	_, err := o.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(o.bucket),
+		Delete: &types.Delete{
+			Objects: objects,
+			Quiet:   aws.Bool(true),
+		},
+	})
+	return err
+}
+
 func (o *objectStorage) CopyObject(ctx context.Context, input *abstraction.CopyObjectInput) error {
 	// Build S3-specific CopySource in format "bucket/key"
 	copySource := url.PathEscape(o.bucket + "/" + input.SourceKey)
@@ -61,6 +84,17 @@ func (o *objectStorage) CopyObject(ctx context.Context, input *abstraction.CopyO
 		CopySource: aws.String(copySource),
 	})
 	return err
+}
+
+func (o *objectStorage) ObjectExists(ctx context.Context, key string) (bool, error) {
+	_, err := o.HeadObject(ctx, &abstraction.HeadObjectInput{
+		Key: key,
+	})
+	if err != nil {
+		// HeadObject returns error when object doesn't exist
+		return false, nil
+	}
+	return true, nil
 }
 
 func isS3NotFound(err error) bool {
