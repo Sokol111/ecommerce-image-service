@@ -86,8 +86,8 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 	}
 
 	// Save to repository
-	if err := h.repo.Save(ctx, img); err != nil {
-		return nil, fmt.Errorf("save image: %w", err)
+	if err := h.repo.Insert(ctx, img); err != nil {
+		return nil, fmt.Errorf("insert image: %w", err)
 	}
 
 	h.log(ctx).Debug("image upload confirmed",

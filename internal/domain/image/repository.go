@@ -3,7 +3,7 @@ package image
 import "context"
 
 type Repository interface {
-	Save(ctx context.Context, image *Image) error
+	Insert(ctx context.Context, image *Image) error
 
 	FindByID(ctx context.Context, id string) (*Image, error)
 
