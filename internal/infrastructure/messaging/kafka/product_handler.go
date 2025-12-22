@@ -6,6 +6,7 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/consumer"
+	commonsevents "github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/events"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-product-service-api/gen/events"
 	"go.uber.org/zap"
@@ -23,7 +24,7 @@ func newProductHandler(promoteImages command.PromoteImagesCommandHandler) *produ
 
 func (h *productHandler) Process(ctx context.Context, event any) error {
 	// Type assert to Event interface first to get exhaustiveness checking
-	e, ok := event.(events.Event)
+	e, ok := event.(commonsevents.Event)
 	if !ok {
 		return fmt.Errorf("event does not implement Event interface: %T: %w", event, consumer.ErrSkipMessage)
 	}

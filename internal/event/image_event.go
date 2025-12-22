@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	commonsevents "github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/events"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
 	"github.com/Sokol111/ecommerce-commons/pkg/observability/tracing"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/events"
@@ -13,7 +14,7 @@ import (
 func newProductImagePromotedEvent(ctx context.Context, productID string, imageID string, imageURL string) *events.ProductImagePromotedEvent {
 	traceId := tracing.GetTraceID(ctx)
 	return &events.ProductImagePromotedEvent{
-		Metadata: events.EventMetadata{
+		Metadata: commonsevents.EventMetadata{
 			EventID:   uuid.New().String(),
 			EventType: events.EventTypeProductImagePromoted,
 			Source:    "ecommerce-image-service",

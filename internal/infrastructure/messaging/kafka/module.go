@@ -11,20 +11,15 @@ import (
 func Module() fx.Option {
 	return fx.Options(
 		consumer.RegisterHandlerAndConsumer("product-events", newProductHandler),
-		fx.Invoke(registerSchemas),
+		fx.Invoke(registerProductSchemas),
+		fx.Invoke(registerImageSchemas),
 	)
 }
 
-func registerSchemas(tm *mapping.TypeMapping) error {
-	for _, reg := range product_events.TypeRegistrations {
-		if err := tm.Register(reg.GoType, reg.SchemaJSON, reg.SchemaName, reg.Topic); err != nil {
-			return err
-		}
-	}
-	for _, reg := range image_events.TypeRegistrations {
-		if err := tm.Register(reg.GoType, reg.SchemaJSON, reg.SchemaName, reg.Topic); err != nil {
-			return err
-		}
-	}
-	return nil
+func registerProductSchemas(tm *mapping.TypeMapping) error {
+	return tm.RegisterBindings(product_events.SchemaBindings)
+}
+
+func registerImageSchemas(tm *mapping.TypeMapping) error {
+	return tm.RegisterBindings(image_events.SchemaBindings)
 }
