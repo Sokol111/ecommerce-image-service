@@ -6,7 +6,6 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/consumer"
-	commonsevents "github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/events"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-product-service-api/gen/events"
 	"go.uber.org/zap"
@@ -23,22 +22,13 @@ func newProductHandler(promoteImages command.PromoteImagesCommandHandler) *produ
 }
 
 func (h *productHandler) Process(ctx context.Context, event any) error {
-	// Type assert to Event interface first to get exhaustiveness checking
-	e, ok := event.(commonsevents.Event)
-	if !ok {
-		return fmt.Errorf("event does not implement Event interface: %T: %w", event, consumer.ErrSkipMessage)
-	}
-
-	// Now switch on concrete types - exhaustive linter will warn if any Event type is missing
-	switch evt := e.(type) {
+	switch evt := event.(type) {
 	case *events.ProductCreatedEvent:
 		return h.handleProductCreated(ctx, evt)
 	case *events.ProductUpdatedEvent:
 		h.log(ctx).Warn("ProductUpdatedEvent handling not implemented yet")
 		return nil
 	default:
-		// If exhaustive linter is enabled and all Event types are handled above,
-		// this case should theoretically never be reached
 		return fmt.Errorf("unhandled event type: %T: %w", event, consumer.ErrSkipMessage)
 	}
 }
