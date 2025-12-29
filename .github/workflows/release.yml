@@ -13,6 +13,6 @@ permissions:
 
 jobs:
   release:
-    uses: Sokol111/ecommerce-infrastructure/.github/workflows/build-and-release-go.yml@master
+    uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-release.yml@master
     secrets:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
