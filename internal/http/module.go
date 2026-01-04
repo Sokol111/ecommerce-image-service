@@ -1,11 +1,15 @@
 package http
 
 import (
-	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
-	"github.com/gin-gonic/gin"
+	"net/http"
+
+	"github.com/ogen-go/ogen/middleware"
+	"github.com/ogen-go/ogen/ogenerrors"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
+
+	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 )
 
 func NewHttpHandlerModule() fx.Option {
@@ -18,16 +22,22 @@ func NewHttpHandlerModule() fx.Option {
 	)
 }
 
-func newOgenServer(handler httpapi.Handler, tracerProvider trace.TracerProvider, meterProvider metric.MeterProvider) (*httpapi.Server, error) {
+func newOgenServer(
+	handler httpapi.Handler,
+	tracerProvider trace.TracerProvider,
+	meterProvider metric.MeterProvider,
+	middlewares []middleware.Middleware,
+	errorHandler ogenerrors.ErrorHandler,
+) (*httpapi.Server, error) {
 	return httpapi.NewServer(
 		handler,
 		httpapi.WithTracerProvider(tracerProvider),
 		httpapi.WithMeterProvider(meterProvider),
+		httpapi.WithErrorHandler(errorHandler),
+		httpapi.WithMiddleware(middlewares...),
 	)
 }
 
-func registerOgenRoutes(engine *gin.Engine, server *httpapi.Server) {
-	// Mount ogen server under /v1/* path
-	// All gin middlewares (logging, recovery, etc.) will be applied
-	engine.Any("/v1/*path", gin.WrapH(server))
+func registerOgenRoutes(mux *http.ServeMux, server *httpapi.Server) {
+	mux.Handle("/", server)
 }
