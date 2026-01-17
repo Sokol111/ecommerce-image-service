@@ -27,7 +27,8 @@ kafka:
         topic: "catalog.product.events"
 
 security:
-  public-key: "eb6ebefd6a2b0a304d43c2ccca329aef0a1439d429dbe8ca9b6190622ce38341"
+  token:
+    public-key: "eb6ebefd6a2b0a304d43c2ccca329aef0a1439d429dbe8ca9b6190622ce38341"
 
 observability:
   otel-collector-endpoint: "otel-collector-opentelemetry-collector.observability.svc:4317"
