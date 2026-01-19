@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Sokol111/ecommerce-catalog-service-api/gen/events"
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/consumer"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
-	"github.com/Sokol111/ecommerce-product-service-api/gen/events"
 	"go.uber.org/zap"
 )
 

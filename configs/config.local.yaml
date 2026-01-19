@@ -23,7 +23,7 @@ kafka:
     default-group-id: "ecommerce-image-service"
     default-auto-offset-reset: "earliest"
     consumers:
-      - name: "product-events"
+      - name: "catalog-events"
         topic: "catalog.product.events"
 
 security:
