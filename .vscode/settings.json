@@ -1,9 +1,0 @@
-{
-    "go.delveConfig": {
-        "dlvToolPath": "/home/ihsokolo/go/bin/dlv"
-    },
-    "go.toolsEnvVars": {
-        "PATH": "/usr/local/go/bin:/home/ihsokolo/go/bin:/usr/bin:/bin",
-        "GOROOT": "/usr/local/go"
-    }
-}
