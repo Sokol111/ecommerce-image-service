@@ -216,20 +216,9 @@ func (h *promoteImagesHandler) deleteSourceFiles(ctx context.Context, results []
 
 // executePromotion runs DB updates and outbox creation in a transaction
 func (h *promoteImagesHandler) executePromotion(ctx context.Context, copyResults []copyResult, productID string) (*promoteResult, error) {
-	result, err := h.txManager.WithTransaction(ctx, func(txCtx context.Context) (any, error) {
+	return persistence.WithTransaction(ctx, h.txManager, func(txCtx context.Context) (*promoteResult, error) {
 		return h.promoteInTransaction(txCtx, copyResults, productID)
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	res, ok := result.(*promoteResult)
-	if !ok {
-		return nil, fmt.Errorf("unexpected result type: %T", result)
-	}
-
-	return res, nil
 }
 
 // promoteInTransaction performs the actual promotion logic within a transaction
