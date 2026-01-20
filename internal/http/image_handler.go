@@ -44,7 +44,7 @@ func newImageHandler(
 
 func (h *imageHandler) CreatePresign(ctx context.Context, req *httpapi.PresignRequest) (httpapi.CreatePresignRes, error) {
 	switch req.OwnerType {
-	case httpapi.OwnerTypeProductDraft, httpapi.OwnerTypeProduct:
+	case httpapi.OwnerTypeDraft, httpapi.OwnerTypeProduct:
 		cmd := command.CreatePresignCommand{
 			ContentType: string(req.ContentType),
 			Filename:    req.Filename,
