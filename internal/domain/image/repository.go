@@ -7,6 +7,8 @@ type Repository interface {
 
 	FindByID(ctx context.Context, id string) (*Image, error)
 
+	FindByIDs(ctx context.Context, ids []string) ([]*Image, error)
+
 	FindByOwner(ctx context.Context, ownerType, ownerID string, imageIDs []string) ([]*Image, error)
 
 	Update(ctx context.Context, image *Image) (*Image, error)

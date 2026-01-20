@@ -11,6 +11,7 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"github.com/Sokol111/ecommerce-image-service/internal/event"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -64,6 +65,11 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 		return nil, err
 	}
 
+	if len(images) == 0 {
+		h.log(ctx).Debug("no images to promote", zap.String("draftID", cmd.DraftID), zap.String("productID", cmd.ProductID))
+		return []*image.Image{}, nil
+	}
+
 	// Phase 1: Copy files (without deleting originals)
 	copyResults, err := h.copyImages(ctx, images, cmd.DraftID, cmd.ProductID)
 	if err != nil {
@@ -92,11 +98,16 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd PromoteImagesCommand) ([]*image.Image, error) {
 	var imageIDs []string
 	if cmd.ImageIDs != nil && len(*cmd.ImageIDs) > 0 {
-		imageIDs = *cmd.ImageIDs
+		imageIDs = lo.Uniq(*cmd.ImageIDs)
 	}
 
-	// Get images to promote (either specified or all from draft)
-	images, err := h.repo.FindByOwner(ctx, "productDraft", cmd.DraftID, imageIDs)
+	// If specific IDs provided, fetch them directly and check their state
+	if len(imageIDs) > 0 {
+		return h.getSpecificImagesToPromote(ctx, imageIDs, cmd.DraftID, cmd.ProductID)
+	}
+
+	// Get all images from draft
+	images, err := h.repo.FindByOwner(ctx, string(image.OwnerTypeDraft), cmd.DraftID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("find draft images: %w", err)
 	}
@@ -105,17 +116,43 @@ func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd Promo
 		return nil, fmt.Errorf("draft %s not found or has no images", cmd.DraftID)
 	}
 
-	// Validate all specified imageIDs were found
-	if imageIDs != nil && len(imageIDs) != len(images) {
-		return nil, fmt.Errorf("some specified image IDs not found in draft %s", cmd.DraftID)
+	return images, nil
+}
+
+// getSpecificImagesToPromote fetches specific images and validates their state for idempotency
+func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, imageIDs []string, draftID, productID string) ([]*image.Image, error) {
+	images, err := h.repo.FindByIDs(ctx, imageIDs)
+	if err != nil {
+		return nil, fmt.Errorf("find images by IDs: %w", err)
 	}
 
-	return images, nil
+	if len(images) != len(imageIDs) {
+		return nil, fmt.Errorf("some specified image IDs not found")
+	}
+
+	var toPromote []*image.Image
+	for _, img := range images {
+		switch {
+		case img.OwnerType == string(image.OwnerTypeDraft) && img.OwnerID == draftID:
+			toPromote = append(toPromote, img)
+
+		case img.OwnerType == string(image.OwnerTypeProduct) && img.OwnerID == productID:
+			h.log(ctx).Debug("image already promoted to target product, skipping",
+				zap.String("imageID", img.ID),
+				zap.String("productID", productID),
+			)
+
+		default:
+			return nil, fmt.Errorf("image %s has invalid owner: %s/%s", img.ID, img.OwnerType, img.OwnerID)
+		}
+	}
+
+	return toPromote, nil
 }
 
 // copyImages copies S3 objects without deleting originals (Phase 1)
 func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.Image, draftID, productID string) ([]copyResult, error) {
-	srcPrefix := "product-drafts/" + draftID + "/"
+	srcPrefix := "drafts/" + draftID + "/"
 	var results []copyResult
 
 	for _, img := range images {

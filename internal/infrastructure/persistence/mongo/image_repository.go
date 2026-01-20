@@ -10,7 +10,6 @@ import (
 
 type imageRepository struct {
 	*commonsmongo.GenericRepository[image.Image, imageEntity]
-	coll commonsmongo.Collection
 }
 
 func newImageRepository(mongo commonsmongo.Mongo, mapper *imageMapper) (image.Repository, error) {
@@ -25,39 +24,34 @@ func newImageRepository(mongo commonsmongo.Mongo, mapper *imageMapper) (image.Re
 
 	return &imageRepository{
 		GenericRepository: genericRepo,
-		coll:              coll,
 	}, nil
+}
+
+// FindByIDs finds images by their IDs
+func (r *imageRepository) FindByIDs(ctx context.Context, ids []string) ([]*image.Image, error) {
+	if len(ids) == 0 {
+		return []*image.Image{}, nil
+	}
+
+	filter := bson.D{
+		{Key: "_id", Value: bson.M{"$in": ids}},
+		{Key: "status", Value: bson.M{"$ne": string(image.StatusDeleted)}},
+	}
+
+	return r.FindAllWithFilter(ctx, filter, nil)
 }
 
 // FindByOwner finds images by owner type and ID
 func (r *imageRepository) FindByOwner(ctx context.Context, ownerType, ownerID string, imageIDs []string) ([]*image.Image, error) {
-	filter := bson.M{
-		"ownerType": ownerType,
-		"ownerId":   ownerID,
-		"status": bson.M{
-			"$ne": string(image.StatusDeleted),
-		},
+	filter := bson.D{
+		{Key: "ownerType", Value: ownerType},
+		{Key: "ownerId", Value: ownerID},
+		{Key: "status", Value: bson.M{"$ne": string(image.StatusDeleted)}},
 	}
+
 	if len(imageIDs) > 0 {
-		filter["_id"] = bson.M{"$in": imageIDs}
+		filter = append(filter, bson.E{Key: "_id", Value: bson.M{"$in": imageIDs}})
 	}
 
-	cur, err := r.coll.Find(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-	defer cur.Close(ctx)
-
-	var entities []imageEntity
-	if err = cur.All(ctx, &entities); err != nil {
-		return nil, err
-	}
-
-	images := make([]*image.Image, 0, len(entities))
-	mapper := &imageMapper{}
-	for i := range entities {
-		images = append(images, mapper.ToDomain(&entities[i]))
-	}
-
-	return images, nil
+	return r.FindAllWithFilter(ctx, filter, nil)
 }

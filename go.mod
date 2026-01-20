@@ -14,6 +14,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/ogen-go/ogen v1.18.0
+	github.com/samber/lo v1.52.0
 	github.com/spf13/viper v1.21.0
 	go.mongodb.org/mongo-driver v1.17.6
 	go.opentelemetry.io/otel/metric v1.39.0

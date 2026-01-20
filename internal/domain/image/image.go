@@ -32,6 +32,14 @@ const (
 	StatusDeleted    ImageStatus = "deleted"
 )
 
+type OwnerType string
+
+const (
+	OwnerTypeDraft   OwnerType = "draft"
+	OwnerTypeProduct OwnerType = "product"
+	OwnerTypeUser    OwnerType = "user"
+)
+
 // NewImage creates a new image with validation
 func NewImage(alt, ownerType, ownerID, role, key, mime string, size int64) (*Image, error) {
 	if err := validateImageData(ownerType, ownerID, key, mime, size); err != nil {
@@ -104,11 +112,11 @@ func (i *Image) UpdateAlt(alt string) {
 
 // PromoteToProduct promotes the image from draft to product
 func (i *Image) PromoteToProduct(productID, newKey string) error {
-	if i.OwnerType != "productDraft" {
+	if i.OwnerType != string(OwnerTypeDraft) {
 		return errors.New("only draft images can be promoted")
 	}
 
-	i.OwnerType = "product"
+	i.OwnerType = string(OwnerTypeProduct)
 	i.OwnerID = productID
 	i.Key = newKey
 	i.Status = StatusProcessing
@@ -167,8 +175,8 @@ func validateImageData(ownerType, ownerID, key, mime string, size int64) error {
 	}
 
 	// Validate owner type
-	switch ownerType {
-	case "product", "productDraft", "user":
+	switch OwnerType(ownerType) {
+	case OwnerTypeProduct, OwnerTypeDraft, OwnerTypeUser:
 		// valid
 	default:
 		return errors.New("invalid owner type")

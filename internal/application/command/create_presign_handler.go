@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
+	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -110,12 +111,12 @@ func (h *createPresignHandler) log(ctx context.Context) *zap.Logger {
 }
 
 func getPrefixByOwnerType(ownerType string) (string, error) {
-	switch ownerType {
-	case "productDraft":
-		return "product-drafts/", nil
-	case "product":
+	switch image.OwnerType(ownerType) {
+	case image.OwnerTypeDraft:
+		return "drafts/", nil
+	case image.OwnerTypeProduct:
 		return "products/", nil
-	case "user":
+	case image.OwnerTypeUser:
 		return "users/", nil
 	default:
 		return "", fmt.Errorf("unsupported owner type: %s", ownerType)

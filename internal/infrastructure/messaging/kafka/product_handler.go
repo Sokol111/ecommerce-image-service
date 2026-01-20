@@ -26,23 +26,30 @@ func (h *productHandler) Process(ctx context.Context, event any) error {
 	case *events.ProductCreatedEvent:
 		return h.handleProductCreated(ctx, evt)
 	case *events.ProductUpdatedEvent:
-		h.log(ctx).Warn("ProductUpdatedEvent handling not implemented yet")
-		return nil
+		return h.handleProductUpdated(ctx, evt)
 	default:
 		return fmt.Errorf("unhandled event type: %T: %w", event, consumer.ErrSkipMessage)
 	}
 }
 
 func (h *productHandler) handleProductCreated(ctx context.Context, e *events.ProductCreatedEvent) error {
+	return h.promoteImage(ctx, e.Payload.ProductID, e.Payload.ImageID)
+}
+
+func (h *productHandler) handleProductUpdated(ctx context.Context, e *events.ProductUpdatedEvent) error {
+	return h.promoteImage(ctx, e.Payload.ProductID, e.Payload.ImageID)
+}
+
+func (h *productHandler) promoteImage(ctx context.Context, productID string, imageID *string) error {
 	var imageIDs *[]string
-	if e.Payload.ImageID != nil {
-		imageIDs = &[]string{*e.Payload.ImageID}
+	if imageID != nil {
+		imageIDs = &[]string{*imageID}
 	}
 
 	cmd := command.PromoteImagesCommand{
-		DraftID:   e.Payload.ProductID,
+		DraftID:   productID,
 		ImageIDs:  imageIDs,
-		ProductID: e.Payload.ProductID,
+		ProductID: productID,
 	}
 
 	_, err := h.promoteImagesHandler.Handle(ctx, cmd)
