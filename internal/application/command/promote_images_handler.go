@@ -276,10 +276,7 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 		promoted = append(promoted, updated)
 
 		imageURL := h.buildImageURL(updated.Key)
-		msg, err := event.NewProductImagePromotedOutboxMessage(ctx, productID, updated.ID, imageURL)
-		if err != nil {
-			return nil, fmt.Errorf("create outbox message: %w", err)
-		}
+		msg := event.NewProductImagePromotedOutboxMessage(ctx, productID, updated.ID, imageURL)
 
 		send, err := h.outbox.Create(ctx, msg)
 		if err != nil {
