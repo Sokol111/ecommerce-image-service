@@ -23,8 +23,6 @@ func newProductHandler(promoteImages command.PromoteImagesCommandHandler) *produ
 
 func (h *productHandler) Process(ctx context.Context, event any) error {
 	switch evt := event.(type) {
-	case *events.ProductCreatedEvent:
-		return h.handleProductCreated(ctx, evt)
 	case *events.ProductUpdatedEvent:
 		return h.handleProductUpdated(ctx, evt)
 	default:
@@ -32,24 +30,16 @@ func (h *productHandler) Process(ctx context.Context, event any) error {
 	}
 }
 
-func (h *productHandler) handleProductCreated(ctx context.Context, e *events.ProductCreatedEvent) error {
-	return h.promoteImage(ctx, e.Payload.ProductID, e.Payload.ImageID)
-}
-
 func (h *productHandler) handleProductUpdated(ctx context.Context, e *events.ProductUpdatedEvent) error {
-	return h.promoteImage(ctx, e.Payload.ProductID, e.Payload.ImageID)
-}
-
-func (h *productHandler) promoteImage(ctx context.Context, productID string, imageID *string) error {
 	var imageIDs *[]string
-	if imageID != nil {
-		imageIDs = &[]string{*imageID}
+	if e.Payload.ImageID != nil {
+		imageIDs = &[]string{*e.Payload.ImageID}
 	}
 
 	cmd := command.PromoteImagesCommand{
-		DraftID:   productID,
+		DraftID:   e.Payload.ProductID,
 		ImageIDs:  imageIDs,
-		ProductID: productID,
+		ProductID: e.Payload.ProductID,
 	}
 
 	_, err := h.promoteImagesHandler.Handle(ctx, cmd)
