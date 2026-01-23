@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	"github.com/Sokol111/ecommerce-catalog-service-api/gen/events"
-	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/kafka/consumer"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
-	"go.uber.org/zap"
 )
 
 type productHandler struct {
@@ -44,8 +42,4 @@ func (h *productHandler) handleProductUpdated(ctx context.Context, e *events.Pro
 
 	_, err := h.promoteImagesHandler.Handle(ctx, cmd)
 	return err
-}
-
-func (h *productHandler) log(ctx context.Context) *zap.Logger {
-	return logger.Get(ctx).With(zap.String("component", "product-handler"))
 }
