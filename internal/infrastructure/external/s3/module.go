@@ -1,100 +1,58 @@
 package s3
 
 import (
-	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.uber.org/fx"
 )
 
 func NewS3Module() fx.Option {
 	return fx.Provide(
 		newConfig,
-		newAWSConfig,       // aws.Config
-		newS3Client,        // *s3.Client
-		newS3PresignClient, // *s3.PresignClient
-		newPresigner,       // abstraction.Presigner (uses application.Config)
-		newObjectStorage,   // abstraction.ObjectStorage (uses Config)
+		newMinioClient,   // *minio.Client
+		newPresigner,     // abstraction.Presigner
+		newObjectStorage, // abstraction.ObjectStorage
 	)
 }
 
-func newAWSConfig(cfg Config) (aws.Config, error) {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConns:        cfg.MaxIdleConns,
-			MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
-			IdleConnTimeout:     cfg.IdleConnTimeout,
-		},
-		Timeout: cfg.HTTPTimeout,
-	}
-
-	loadOpts := []func(*awsconfig.LoadOptions) error{
-		awsconfig.WithRegion(cfg.Region),
-		awsconfig.WithHTTPClient(httpClient),
-	}
-
+// newMinioClient creates a MinIO client that works with any S3-compatible storage
+func newMinioClient(cfg Config) (*minio.Client, error) {
 	if cfg.AccessKeyID == "" || cfg.SecretKey == "" {
-		return aws.Config{}, fmt.Errorf("missing required S3 static credentials: access-key-id and secret-key must both be set")
-	}
-	loadOpts = append(loadOpts, awsconfig.WithCredentialsProvider(
-		credentials.NewStaticCredentialsProvider(cfg.AccessKeyID, cfg.SecretKey, ""),
-	))
-
-	ctx := context.Background()
-	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, loadOpts...)
-	if err != nil {
-		return aws.Config{}, fmt.Errorf("load aws config: %w", err)
+		return nil, fmt.Errorf("missing required S3 credentials: access-key-id and secret-key must both be set")
 	}
 
-	return awsCfg, nil
-}
-
-func newS3Client(cfg Config, awsCfg aws.Config) *s3.Client {
-	opts := func(o *s3.Options) {
-		if cfg.Endpoint != "" { // MinIO / кастомний S3 сумісний сторедж
-			o.BaseEndpoint = aws.String(cfg.Endpoint) // сучасний спосіб заміни endpoint без глобального резолвера
-		}
-		if cfg.UsePathStyle { // MinIO зазвичай потребує path-style
-			o.UsePathStyle = true
-		}
-	}
-	return s3.NewFromConfig(awsCfg, opts)
-}
-
-func newS3PresignClient(cfg Config, awsCfg aws.Config) *s3.PresignClient {
-	// Use public endpoint for presigned URLs if configured, otherwise use regular endpoint
+	// Use public endpoint for presigned URLs if configured
 	endpoint := cfg.Endpoint
 	if cfg.PublicEndpoint != "" {
 		endpoint = cfg.PublicEndpoint
 	}
 
-	opts := []func(*s3.PresignOptions){
-		func(po *s3.PresignOptions) {
-			po.ClientOptions = append(po.ClientOptions, func(o *s3.Options) {
-				if endpoint != "" {
-					o.BaseEndpoint = aws.String(endpoint)
-				}
-				if cfg.UsePathStyle {
-					o.UsePathStyle = true
-				}
-			})
-		},
+	// Parse endpoint to extract host and scheme
+	host, secure := parseEndpoint(endpoint)
+
+	// Create custom HTTP transport with connection pooling
+	transport := &http.Transport{
+		MaxIdleConns:        cfg.MaxIdleConns,
+		MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
+		IdleConnTimeout:     cfg.IdleConnTimeout,
 	}
 
-	// Create a separate client for presigning with public endpoint
-	client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
-		if endpoint != "" {
-			o.BaseEndpoint = aws.String(endpoint)
-		}
-		if cfg.UsePathStyle {
-			o.UsePathStyle = true
-		}
+	return minio.New(host, &minio.Options{
+		Creds:     credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretKey, ""),
+		Secure:    secure,
+		Region:    cfg.Region,
+		Transport: transport,
 	})
+}
 
-	return s3.NewPresignClient(client, opts...)
+// parseEndpoint extracts host and determines if HTTPS from endpoint URL
+func parseEndpoint(endpoint string) (host string, secure bool) {
+	if strings.HasPrefix(endpoint, "https://") {
+		return strings.TrimPrefix(endpoint, "https://"), true
+	}
+	return strings.TrimPrefix(endpoint, "http://"), false
 }

@@ -6,37 +6,61 @@ import (
 
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/minio/minio-go/v7"
 )
 
 type presigner struct {
-	client *s3.PresignClient
-	bucket string
-	ttl    time.Duration
+	minioClient *minio.Client
+	bucket      string
+	ttl         time.Duration
 }
 
 // newPresigner creates a new Presigner implementation
-func newPresigner(client *s3.PresignClient, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
+func newPresigner(minioClient *minio.Client, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
 	return &presigner{
-		client: client,
-		bucket: s3Cfg.Bucket,
-		ttl:    appCfg.PresignTTL,
+		minioClient: minioClient,
+		bucket:      s3Cfg.Bucket,
+		ttl:         appCfg.PresignTTL,
 	}
 }
 
-func (p *presigner) PresignPutObject(ctx context.Context, input *abstraction.PresignPutObjectInput) (*abstraction.PresignPutObjectOutput, error) {
-	out, err := p.client.PresignPutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(p.bucket),
-		Key:         aws.String(input.Key),
-		ContentType: aws.String(input.ContentType),
-	}, s3.WithPresignExpires(p.ttl))
+// CreatePostPolicy creates a POST policy that enforces size limits at S3/MinIO level.
+// This prevents attackers from uploading files larger than specified, even with a valid presigned URL.
+func (p *presigner) CreatePostPolicy(ctx context.Context, input *abstraction.PostPolicyInput) (*abstraction.PostPolicyOutput, error) {
+	policy := minio.NewPostPolicy()
+
+	// Set bucket and key
+	if err := policy.SetBucket(p.bucket); err != nil {
+		return nil, err
+	}
+	if err := policy.SetKey(input.Key); err != nil {
+		return nil, err
+	}
+
+	// Set expiration
+	if err := policy.SetExpires(time.Now().Add(p.ttl)); err != nil {
+		return nil, err
+	}
+
+	// Set content type
+	if err := policy.SetContentType(input.ContentType); err != nil {
+		return nil, err
+	}
+
+	// Set exact content length - S3/MinIO will reject uploads with different size
+	if err := policy.SetContentLengthRange(input.Size, input.Size); err != nil {
+		return nil, err
+	}
+
+	// Generate presigned POST policy
+	url, formData, err := p.minioClient.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return nil, err
 	}
 
-	return &abstraction.PresignPutObjectOutput{
-		URL:        out.URL,
+	return &abstraction.PostPolicyOutput{
+		URL:        url.String(),
+		FormData:   formData,
 		TTLSeconds: int(p.ttl.Seconds()),
 	}, nil
 }

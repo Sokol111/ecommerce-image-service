@@ -3,23 +3,18 @@ package s3
 import (
 	"context"
 	"errors"
-	"net/url"
 
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/smithy-go"
+	"github.com/minio/minio-go/v7"
 )
 
 type objectStorage struct {
-	client *s3.Client
+	client *minio.Client
 	bucket string
 }
 
 // newObjectStorage creates a new ObjectStorage implementation
-func newObjectStorage(client *s3.Client, cfg Config) abstraction.ObjectStorage {
+func newObjectStorage(client *minio.Client, cfg Config) abstraction.ObjectStorage {
 	return &objectStorage{
 		client: client,
 		bucket: cfg.Bucket,
@@ -27,29 +22,22 @@ func newObjectStorage(client *s3.Client, cfg Config) abstraction.ObjectStorage {
 }
 
 func (o *objectStorage) HeadObject(ctx context.Context, input *abstraction.HeadObjectInput) (*abstraction.HeadObjectOutput, error) {
-	out, err := o.client.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(o.bucket),
-		Key:    aws.String(input.Key),
-	})
+	info, err := o.client.StatObject(ctx, o.bucket, input.Key, minio.StatObjectOptions{})
 	if err != nil {
-		// Convert S3 not found errors to nil response (object doesn't exist)
-		if isS3NotFound(err) {
+		if isMinioNotFound(err) {
 			return nil, errors.New("object not found")
 		}
 		return nil, err
 	}
 
+	size := info.Size
 	return &abstraction.HeadObjectOutput{
-		ContentLength: out.ContentLength,
+		ContentLength: &size,
 	}, nil
 }
 
 func (o *objectStorage) DeleteObject(ctx context.Context, input *abstraction.DeleteObjectInput) error {
-	_, err := o.client.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(o.bucket),
-		Key:    aws.String(input.Key),
-	})
-	return err
+	return o.client.RemoveObject(ctx, o.bucket, input.Key, minio.RemoveObjectOptions{})
 }
 
 func (o *objectStorage) DeleteObjects(ctx context.Context, keys []string) error {
@@ -57,60 +45,51 @@ func (o *objectStorage) DeleteObjects(ctx context.Context, keys []string) error 
 		return nil
 	}
 
-	objects := make([]types.ObjectIdentifier, len(keys))
-	for i, key := range keys {
-		objects[i] = types.ObjectIdentifier{
-			Key: aws.String(key),
+	objectsCh := make(chan minio.ObjectInfo, len(keys))
+	go func() {
+		defer close(objectsCh)
+		for _, key := range keys {
+			objectsCh <- minio.ObjectInfo{Key: key}
+		}
+	}()
+
+	errCh := o.client.RemoveObjects(ctx, o.bucket, objectsCh, minio.RemoveObjectsOptions{})
+	for err := range errCh {
+		if err.Err != nil {
+			return err.Err
 		}
 	}
-
-	_, err := o.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
-		Bucket: aws.String(o.bucket),
-		Delete: &types.Delete{
-			Objects: objects,
-			Quiet:   aws.Bool(true),
-		},
-	})
-	return err
+	return nil
 }
 
 func (o *objectStorage) CopyObject(ctx context.Context, input *abstraction.CopyObjectInput) error {
-	// Build S3-specific CopySource in format "bucket/key"
-	copySource := url.PathEscape(o.bucket + "/" + input.SourceKey)
-
-	_, err := o.client.CopyObject(ctx, &s3.CopyObjectInput{
-		Bucket:     aws.String(o.bucket),
-		Key:        aws.String(input.TargetKey),
-		CopySource: aws.String(copySource),
-	})
+	src := minio.CopySrcOptions{
+		Bucket: o.bucket,
+		Object: input.SourceKey,
+	}
+	dst := minio.CopyDestOptions{
+		Bucket: o.bucket,
+		Object: input.TargetKey,
+	}
+	_, err := o.client.CopyObject(ctx, dst, src)
 	return err
 }
 
 func (o *objectStorage) ObjectExists(ctx context.Context, key string) (bool, error) {
-	_, err := o.HeadObject(ctx, &abstraction.HeadObjectInput{
-		Key: key,
-	})
+	_, err := o.client.StatObject(ctx, o.bucket, key, minio.StatObjectOptions{})
 	if err != nil {
-		// HeadObject returns error when object doesn't exist
-		return false, nil
+		if isMinioNotFound(err) {
+			return false, nil
+		}
+		return false, err
 	}
 	return true, nil
 }
 
-func isS3NotFound(err error) bool {
+func isMinioNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	var ae smithy.APIError
-	if errors.As(err, &ae) {
-		switch ae.ErrorCode() {
-		case "NotFound", "NoSuchKey", "NoSuchBucket":
-			return true
-		}
-	}
-	var re *awshttp.ResponseError
-	if errors.As(err, &re) && re.HTTPStatusCode() == 404 {
-		return true
-	}
-	return false
+	errResp := minio.ToErrorResponse(err)
+	return errResp.Code == "NoSuchKey" || errResp.Code == "NotFound"
 }
