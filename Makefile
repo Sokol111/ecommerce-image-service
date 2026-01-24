@@ -84,9 +84,6 @@ lint: ## Run golangci-lint (includes vet, errcheck, staticcheck, etc.)
 		exit 1; \
 	fi
 
-.PHONY: check-all
-check-all: fmt lint ## Run all code quality checks
-
 # =============================================================================
 # Testing
 # =============================================================================
@@ -248,7 +245,7 @@ profile-trace: ## Run execution trace
 pre-commit: fmt lint test-unit ## Run pre-commit checks
 
 .PHONY: pre-push
-pre-push: check-all test vuln-check ## Run pre-push checks (more thorough)
+pre-push: fmt lint test vuln-check ## Run pre-push checks (more thorough)
 
 .PHONY: install-hooks
 install-hooks: ## Install git pre-commit hooks
@@ -263,7 +260,7 @@ install-hooks: ## Install git pre-commit hooks
 # =============================================================================
 
 .PHONY: ci
-ci: deps fmt check-all test vuln-check ## Run full CI pipeline
+ci: deps fmt lint test vuln-check ## Run full CI pipeline
 
 .PHONY: ci-local
 ci-local: clean ci ## Run CI pipeline locally with clean state

@@ -12,7 +12,11 @@ permissions:
   contents: write
 
 jobs:
+  ci:
+    uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-ci.yml@master
+
   release:
+    needs: ci
     uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-release.yml@master
     secrets:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
