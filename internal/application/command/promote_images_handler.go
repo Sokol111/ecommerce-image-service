@@ -275,8 +275,9 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 		}
 		promoted = append(promoted, updated)
 
-		imageURL := h.buildImageURL(updated.Key)
-		msg := event.NewProductImagePromotedOutboxMessage(ctx, productID, updated.ID, imageURL)
+		smallImageURL := h.buildImageURL(updated.Key, 400)
+		largeImageURL := h.buildImageURL(updated.Key, 800)
+		msg := event.NewProductImagePromotedOutboxMessage(ctx, productID, updated.ID, smallImageURL, largeImageURL)
 
 		send, err := h.outbox.Create(ctx, msg)
 		if err != nil {
@@ -298,10 +299,9 @@ func (h *promoteImagesHandler) sendOutboxMessages(ctx context.Context, sends []o
 	}
 }
 
-func (h *promoteImagesHandler) buildImageURL(key string) string {
-	w := 400
+func (h *promoteImagesHandler) buildImageURL(key string, width int) string {
 	quality := 85
-	return h.signer.BuildURL(key, abstraction.SignerOptions{Width: &w, Quality: &quality})
+	return h.signer.BuildURL(key, abstraction.SignerOptions{Width: &width, Quality: &quality})
 }
 
 func (h *promoteImagesHandler) log(ctx context.Context) *zap.Logger {
