@@ -1,37 +1,64 @@
+# =============================================================================
+# Image Service - Production Configuration
+# =============================================================================
+# Values can be overridden by environment variables.
+# Viper automatically maps: mongo.host -> MONGO_HOST, s3.endpoint -> S3_ENDPOINT, etc.
+
 logger:
-  level: "debug"
+  level: info
+  development: false
 
 server:
   port: 8080
 
 mongo:
-  host: ""
+  host: mongo
   port: 27017
+  username: admin
+  password: ""
+  database: images
   replica-set: rs0
-  database: "product"
-
-kafka:
-  brokers: ""
+  migrations:
+    enabled: true
+    auto-migrate: true
 
 observability:
-  tracing-enabled: true
-  otel-collector-endpoint: ""
+  otel-collector-endpoint: http://otel-collector:4317
+  tracing:
+    enabled: true
+  metrics:
+    enabled: true
 
-application:
-  presign-ttl: 15m # Presigned URL validity duration
-  max-upload-bytes: 5242880 # 5 MB - maximum upload size
-  jwt-secret: "${JWT_SECRET}" # Must be set via environment variable
+security:
+  token:
+    public-key: ""
+
+kafka:
+  brokers: kafka:29092
+  schema-registry:
+    url: http://schema-registry:8081
+    auto-register-schemas: true
+  producers-config:
+    producers:
+      - name: product-image-events
+        topic: image.product-image.events
+  consumers-config:
+    default-group-id: ecommerce-image-service
+    default-auto-offset-reset: earliest
+    consumers:
+      - name: product-events
+        topic: catalog.product.events
 
 s3:
-  endpoint: "" # Leave empty for AWS S3
-  public-endpoint: "" # Not needed for AWS S3, URLs are already public
-  region: "us-east-1"
-  bucket: "products"
-  access-key-id: ""
+  endpoint: http://minio:9000
+  public-endpoint: ""
+  access-key-id: minioadmin
   secret-key: ""
-  use-path-style: false # AWS S3 uses virtual-hosted-style
+  bucket: ecommerce-images
+  region: us-east-1
+  use-ssl: false
 
 imgproxy:
-  base-url: ""
+  public-base-url: ""
   key-hex: ""
   salt-hex: ""
