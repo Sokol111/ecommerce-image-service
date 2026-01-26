@@ -11,6 +11,7 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
+	"github.com/samber/lo"
 )
 
 var aboutBlankURL, _ = url.Parse("about:blank")
@@ -137,10 +138,9 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 		}, nil
 	}
 
-	promoted := make([]httpapi.Image, 0, len(images))
-	for _, img := range images {
-		promoted = append(promoted, *toAPI(img))
-	}
+	promoted := lo.Map(images, func(img *image.Image, _ int) httpapi.Image {
+		return *toAPI(img)
+	})
 
 	return &httpapi.PromoteImagesOK{Promoted: promoted}, nil
 }
