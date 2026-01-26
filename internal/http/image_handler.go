@@ -16,6 +16,17 @@ import (
 
 var aboutBlankURL, _ = url.Parse("about:blank")
 
+// deliveryURLParams holds extracted optional parameters for delivery URL generation
+type deliveryURLParams struct {
+	Width   *int
+	Height  *int
+	Fit     *string
+	Quality *int
+	DPR     *float32
+	Format  *string
+	Expires *time.Time
+}
+
 type imageHandler struct {
 	createPresignHandler  command.CreatePresignCommandHandler
 	confirmUploadHandler  command.ConfirmUploadCommandHandler
@@ -146,49 +157,22 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 }
 
 func (h *imageHandler) GetDeliveryUrl(ctx context.Context, params httpapi.GetDeliveryUrlParams) (httpapi.GetDeliveryUrlRes, error) {
-	var fit *string
-	if params.Fit.IsSet() {
-		f := string(params.Fit.Value)
-		fit = &f
-	}
-	var format *string
-	if params.Format.IsSet() {
-		f := string(params.Format.Value)
-		format = &f
-	}
-	var expires *time.Time
+	urlParams := extractDeliveryURLParams(params.W, params.H, params.Fit, params.Quality, params.Dpr, params.Format)
+
 	if params.TtlSeconds.IsSet() {
 		t := time.Now().Add(time.Duration(params.TtlSeconds.Value) * time.Second)
-		expires = &t
-	}
-
-	var width *int
-	if params.W.IsSet() {
-		width = &params.W.Value
-	}
-	var height *int
-	if params.H.IsSet() {
-		height = &params.H.Value
-	}
-	var quality *int
-	if params.Quality.IsSet() {
-		quality = &params.Quality.Value
-	}
-	var dpr *float32
-	if params.Dpr.IsSet() {
-		v := float32(params.Dpr.Value)
-		dpr = &v
+		urlParams.Expires = &t
 	}
 
 	q := query.GetDeliveryURLQuery{
 		ImageID: params.ID,
-		Width:   width,
-		Height:  height,
-		Fit:     fit,
-		Quality: quality,
-		DPR:     dpr,
-		Format:  format,
-		Expires: expires,
+		Width:   urlParams.Width,
+		Height:  urlParams.Height,
+		Fit:     urlParams.Fit,
+		Quality: urlParams.Quality,
+		DPR:     urlParams.DPR,
+		Format:  urlParams.Format,
+		Expires: urlParams.Expires,
 	}
 
 	result, err := h.getDeliveryURLHandler.Handle(ctx, q)
@@ -209,14 +193,7 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, params httpapi.GetDel
 		}, nil
 	}
 
-	parsedURL, _ := url.Parse(result.URL)
-	response := &httpapi.GetDeliveryUrlOK{
-		URL: *parsedURL,
-	}
-	if result.ExpiresAt != nil {
-		response.ExpiresAt = httpapi.NewOptDateTime(*result.ExpiresAt)
-	}
-	return response, nil
+	return buildDeliveryURLResponse(result), nil
 }
 
 func (h *imageHandler) DeleteImage(ctx context.Context, params httpapi.DeleteImageParams) (httpapi.DeleteImageRes, error) {
@@ -292,29 +269,7 @@ func (h *imageHandler) ListImages(ctx context.Context, params httpapi.ListImages
 }
 
 func (h *imageHandler) GetDeliveryUrls(ctx context.Context, req *httpapi.BatchUrlRequest) (httpapi.GetDeliveryUrlsRes, error) {
-	var fit *string
-	if req.Fit.IsSet() {
-		f := string(req.Fit.Value)
-		fit = &f
-	}
-	var format *string
-	if req.Format.IsSet() {
-		f := string(req.Format.Value)
-		format = &f
-	}
-
-	var width *int
-	if req.W.IsSet() {
-		width = &req.W.Value
-	}
-	var height *int
-	if req.H.IsSet() {
-		height = &req.H.Value
-	}
-	var quality *int
-	if req.Quality.IsSet() {
-		quality = &req.Quality.Value
-	}
+	urlParams := extractDeliveryURLParamsFromBatch(req)
 
 	urls := make([]httpapi.ImageUrl, 0, len(req.ImageIds))
 	notFound := make([]string, 0)
@@ -322,11 +277,11 @@ func (h *imageHandler) GetDeliveryUrls(ctx context.Context, req *httpapi.BatchUr
 	for _, imageID := range req.ImageIds {
 		q := query.GetDeliveryURLQuery{
 			ImageID: imageID,
-			Width:   width,
-			Height:  height,
-			Fit:     fit,
-			Quality: quality,
-			Format:  format,
+			Width:   urlParams.Width,
+			Height:  urlParams.Height,
+			Fit:     urlParams.Fit,
+			Quality: urlParams.Quality,
+			Format:  urlParams.Format,
 		}
 
 		result, err := h.getDeliveryURLHandler.Handle(ctx, q)
@@ -343,15 +298,7 @@ func (h *imageHandler) GetDeliveryUrls(ctx context.Context, req *httpapi.BatchUr
 			}, nil
 		}
 
-		parsedURL, _ := url.Parse(result.URL)
-		imgUrl := httpapi.ImageUrl{
-			ImageId: imageID,
-			URL:     *parsedURL,
-		}
-		if result.ExpiresAt != nil {
-			imgUrl.ExpiresAt = httpapi.NewOptDateTime(*result.ExpiresAt)
-		}
-		urls = append(urls, imgUrl)
+		urls = append(urls, buildImageURL(imageID, result))
 	}
 
 	return &httpapi.BatchUrlResponse{
@@ -393,4 +340,83 @@ func toAPI(img *image.Image) *httpapi.Image {
 		CreatedAt:  img.CreatedAt,
 		ModifiedAt: img.ModifiedAt,
 	}
+}
+
+// extractDeliveryURLParams extracts optional parameters for delivery URL generation
+func extractDeliveryURLParams(w, h httpapi.OptInt, fit httpapi.OptGetDeliveryUrlFit, quality httpapi.OptInt, dpr httpapi.OptFloat64, format httpapi.OptGetDeliveryUrlFormat) deliveryURLParams {
+	params := deliveryURLParams{}
+
+	if w.IsSet() {
+		params.Width = &w.Value
+	}
+	if h.IsSet() {
+		params.Height = &h.Value
+	}
+	if fit.IsSet() {
+		f := string(fit.Value)
+		params.Fit = &f
+	}
+	if quality.IsSet() {
+		params.Quality = &quality.Value
+	}
+	if dpr.IsSet() {
+		v := float32(dpr.Value)
+		params.DPR = &v
+	}
+	if format.IsSet() {
+		f := string(format.Value)
+		params.Format = &f
+	}
+
+	return params
+}
+
+// extractDeliveryURLParamsFromBatch extracts optional parameters from batch request
+func extractDeliveryURLParamsFromBatch(req *httpapi.BatchUrlRequest) deliveryURLParams {
+	params := deliveryURLParams{}
+
+	if req.W.IsSet() {
+		params.Width = &req.W.Value
+	}
+	if req.H.IsSet() {
+		params.Height = &req.H.Value
+	}
+	if req.Fit.IsSet() {
+		f := string(req.Fit.Value)
+		params.Fit = &f
+	}
+	if req.Quality.IsSet() {
+		params.Quality = &req.Quality.Value
+	}
+	if req.Format.IsSet() {
+		f := string(req.Format.Value)
+		params.Format = &f
+	}
+
+	return params
+}
+
+// buildDeliveryURLResponse builds HTTP response for single delivery URL
+func buildDeliveryURLResponse(result *query.GetDeliveryURLResult) *httpapi.GetDeliveryUrlOK {
+	parsedURL, _ := url.Parse(result.URL)
+	response := &httpapi.GetDeliveryUrlOK{
+		URL: *parsedURL,
+	}
+	if result.ExpiresAt != nil {
+		response.ExpiresAt = httpapi.NewOptDateTime(*result.ExpiresAt)
+	}
+	return response
+}
+
+// buildImageURL builds ImageUrl response for batch delivery URLs
+func buildImageURL(imageID string, result *query.GetDeliveryURLResult) httpapi.ImageUrl {
+	parsedURL, _ := url.Parse(result.URL)
+	imgUrl := httpapi.ImageUrl{
+		ImageId: imageID,
+		URL:     *parsedURL,
+	}
+	if result.ExpiresAt != nil {
+		imgUrl.ExpiresAt = httpapi.NewOptDateTime(*result.ExpiresAt)
+	}
+	return imgUrl
 }
