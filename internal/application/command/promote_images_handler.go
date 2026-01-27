@@ -29,20 +29,26 @@ type PromoteImagesCommandHandler interface {
 }
 
 type promoteImagesHandler struct {
-	repo       image.Repository
-	objStorage abstraction.ObjectStorage
-	signer     abstraction.ImgproxySigner
-	outbox     outbox.Outbox
-	txManager  persistence.TxManager
+	repo         image.Repository
+	objStorage   abstraction.ObjectStorage
+	signer       abstraction.ImgproxySigner
+	outbox       outbox.Outbox
+	txManager    persistence.TxManager
+	smallWidth   int
+	largeWidth   int
+	imageQuality int
 }
 
-func NewPromoteImagesHandler(repo image.Repository, objStorage abstraction.ObjectStorage, signer abstraction.ImgproxySigner, outbox outbox.Outbox, txManager persistence.TxManager) PromoteImagesCommandHandler {
+func NewPromoteImagesHandler(repo image.Repository, objStorage abstraction.ObjectStorage, signer abstraction.ImgproxySigner, outbox outbox.Outbox, txManager persistence.TxManager, smallWidth, largeWidth, quality int) PromoteImagesCommandHandler {
 	return &promoteImagesHandler{
-		repo:       repo,
-		objStorage: objStorage,
-		signer:     signer,
-		outbox:     outbox,
-		txManager:  txManager,
+		repo:         repo,
+		objStorage:   objStorage,
+		signer:       signer,
+		outbox:       outbox,
+		txManager:    txManager,
+		smallWidth:   smallWidth,
+		largeWidth:   largeWidth,
+		imageQuality: quality,
 	}
 }
 
@@ -276,8 +282,8 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 		}
 		promoted = append(promoted, updated)
 
-		smallImageURL := h.buildImageURL(updated.Key, 400)
-		largeImageURL := h.buildImageURL(updated.Key, 800)
+		smallImageURL := h.buildImageURL(updated.Key, h.smallWidth)
+		largeImageURL := h.buildImageURL(updated.Key, h.largeWidth)
 		msg := event.NewProductImagePromotedOutboxMessage(ctx, productID, updated.ID, smallImageURL, largeImageURL)
 
 		send, err := h.outbox.Create(ctx, msg)
@@ -301,7 +307,7 @@ func (h *promoteImagesHandler) sendOutboxMessages(ctx context.Context, sends []o
 }
 
 func (h *promoteImagesHandler) buildImageURL(key string, width int) string {
-	quality := 85
+	quality := h.imageQuality
 	return h.signer.BuildURL(key, abstraction.SignerOptions{Width: &width, Quality: &quality})
 }
 

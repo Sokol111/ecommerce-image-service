@@ -38,6 +38,10 @@ application:
   presign-ttl: 15m # Presigned URL validity duration
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
   jwt-secret: "dev-secret-key-change-in-production-min-32-chars-long!"
+  promote:
+    small-width: 400
+    large-width: 800
+    quality: 85
 
 s3:
   endpoint: "http://localhost:9000"

@@ -26,10 +26,9 @@ type Image struct {
 type ImageStatus string
 
 const (
-	StatusUploaded   ImageStatus = "uploaded"
-	StatusProcessing ImageStatus = "processing"
-	StatusReady      ImageStatus = "ready"
-	StatusDeleted    ImageStatus = "deleted"
+	StatusUploaded ImageStatus = "uploaded"
+	StatusReady    ImageStatus = "ready"
+	StatusDeleted  ImageStatus = "deleted"
 )
 
 type OwnerType string
@@ -104,12 +103,6 @@ func Reconstruct(id string, version int, alt, ownerType, ownerID, role, key, mim
 	}
 }
 
-// UpdateAlt updates the image alt text
-func (i *Image) UpdateAlt(alt string) {
-	i.Alt = alt
-	i.ModifiedAt = time.Now().UTC()
-}
-
 // PromoteToProduct promotes the image from draft to product
 func (i *Image) PromoteToProduct(productID, newKey string) error {
 	if i.OwnerType != string(OwnerTypeDraft) {
@@ -119,32 +112,15 @@ func (i *Image) PromoteToProduct(productID, newKey string) error {
 	i.OwnerType = string(OwnerTypeProduct)
 	i.OwnerID = productID
 	i.Key = newKey
-	i.Status = StatusProcessing
-	i.ModifiedAt = time.Now().UTC()
-	return nil
-}
-
-// MarkAsReady marks the image as ready to use
-func (i *Image) MarkAsReady() {
 	i.Status = StatusReady
 	i.ModifiedAt = time.Now().UTC()
-}
-
-// MarkAsProcessing marks the image as processing
-func (i *Image) MarkAsProcessing() {
-	i.Status = StatusProcessing
-	i.ModifiedAt = time.Now().UTC()
+	return nil
 }
 
 // MarkAsDeleted soft deletes the image
 func (i *Image) MarkAsDeleted() {
 	i.Status = StatusDeleted
 	i.ModifiedAt = time.Now().UTC()
-}
-
-// IncrementVersion increments version for optimistic locking
-func (i *Image) IncrementVersion() {
-	i.Version++
 }
 
 // IsDeleted checks if the image is marked as deleted

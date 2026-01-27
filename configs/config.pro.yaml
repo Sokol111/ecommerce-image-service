@@ -29,6 +29,15 @@ observability:
   metrics:
     enabled: true
 
+application:
+  presign-ttl: 15m # Presigned URL validity duration
+  max-upload-bytes: 5242880 # 5 MB - maximum upload size
+  jwt-secret: ""
+  promote:
+    small-width: 400
+    large-width: 800
+    quality: 85
+
 security:
   token:
     public-key: ""
