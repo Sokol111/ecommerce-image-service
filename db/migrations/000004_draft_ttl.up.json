@@ -1,0 +1,21 @@
+[
+    {
+        "createIndexes": "image",
+        "indexes": [
+            {
+                "name": "image_draft_ttl_v1",
+                "key": {
+                    "createdAt": 1
+                },
+                "expireAfterSeconds": 1800,
+                "partialFilterExpression": {
+                    "ownerType": "draft"
+                }
+            }
+        ],
+        "commitQuorum": "majority",
+        "writeConcern": {
+            "w": "majority"
+        }
+    }
+]
