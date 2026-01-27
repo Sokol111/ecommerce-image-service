@@ -8,6 +8,7 @@ import (
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
 	"github.com/Sokol111/ecommerce-commons/pkg/persistence"
+	"github.com/Sokol111/ecommerce-image-service/internal/apperrors"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"github.com/Sokol111/ecommerce-image-service/internal/event"
@@ -113,7 +114,7 @@ func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd Promo
 	}
 
 	if len(images) == 0 {
-		return nil, fmt.Errorf("draft %s not found or has no images", cmd.DraftID)
+		return nil, fmt.Errorf("%w: %s", apperrors.ErrDraftNotFound, cmd.DraftID)
 	}
 
 	return images, nil
@@ -127,7 +128,7 @@ func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, i
 	}
 
 	if len(images) != len(imageIDs) {
-		return nil, fmt.Errorf("some specified image IDs not found")
+		return nil, fmt.Errorf("%w: some specified image IDs not found", image.ErrImageNotFound)
 	}
 
 	var toPromote []*image.Image
@@ -143,7 +144,7 @@ func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, i
 			)
 
 		default:
-			return nil, fmt.Errorf("image %s has invalid owner: %s/%s", img.ID, img.OwnerType, img.OwnerID)
+			return nil, fmt.Errorf("%w: image %s has owner %s/%s", apperrors.ErrInvalidImageOwner, img.ID, img.OwnerType, img.OwnerID)
 		}
 	}
 

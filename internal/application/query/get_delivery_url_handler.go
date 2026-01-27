@@ -53,6 +53,10 @@ func (h *getDeliveryURLHandler) Handle(ctx context.Context, query GetDeliveryURL
 		return nil, fmt.Errorf("failed to get image by id: %w", err)
 	}
 
+	if img.IsDeleted() {
+		return nil, image.ErrImageNotFound
+	}
+
 	// Build imgproxy URL (infrastructure layer handles S3 source formatting)
 	imgproxyURL := h.signer.BuildURL(img.Key, abstraction.SignerOptions{
 		Width:   query.Width,

@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
@@ -53,24 +52,18 @@ func NewCreatePresignHandler(presigner abstraction.Presigner, tokenService abstr
 }
 
 func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignCommand) (*CreatePresignResult, error) {
-	// Validate content type
-	extByCT := map[string]string{
-		"image/jpeg": ".jpg",
-		"image/png":  ".png",
-		"image/webp": ".webp",
-		"image/avif": ".avif",
-	}
-	ext := extByCT[strings.ToLower(cmd.ContentType)]
+	// Validate content type using domain rules
+	ext := image.GetExtensionForMimeType(cmd.ContentType)
 	if ext == "" {
-		return nil, fmt.Errorf("unsupported content type: %s", cmd.ContentType)
+		return nil, fmt.Errorf("%w: %s", image.ErrUnsupportedMimeType, cmd.ContentType)
 	}
 
 	// Validate size
 	if cmd.Size <= 0 {
-		return nil, fmt.Errorf("size must be positive")
+		return nil, fmt.Errorf("%w: size must be positive", image.ErrInvalidSize)
 	}
 	if h.maxUploadBytes > 0 && cmd.Size > h.maxUploadBytes {
-		return nil, fmt.Errorf("size exceeds maximum allowed: %d bytes", h.maxUploadBytes)
+		return nil, fmt.Errorf("%w: max %d bytes", image.ErrImageTooLarge, h.maxUploadBytes)
 	}
 
 	// Get prefix by owner type

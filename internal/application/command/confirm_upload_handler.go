@@ -3,8 +3,10 @@ package command
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
+	"github.com/Sokol111/ecommerce-image-service/internal/apperrors"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"go.uber.org/zap"
@@ -43,7 +45,7 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 	// Validate and extract claims from upload token
 	claims, err := h.tokenService.ValidateUploadToken(ctx, cmd.UploadToken)
 	if err != nil {
-		return nil, fmt.Errorf("invalid upload token: %w", err)
+		return nil, fmt.Errorf("%w: %v", apperrors.ErrInvalidUploadToken, err)
 	}
 
 	// Verify object exists in S3
@@ -51,6 +53,9 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 		Key: claims.Key,
 	})
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return nil, fmt.Errorf("%w: %s", apperrors.ErrObjectNotFound, claims.Key)
+		}
 		return nil, fmt.Errorf("head object: %w", err)
 	}
 
@@ -61,11 +66,15 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 
 	// Validate size matches expected size from token
 	if claims.Size > 0 && size != claims.Size {
-		h.log(ctx).Warn("uploaded file size mismatch",
+		h.log(ctx).Warn("uploaded file size mismatch, deleting",
 			zap.Int64("expected", claims.Size),
 			zap.Int64("actual", size),
 			zap.String("key", claims.Key),
 		)
+		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
+			Key: claims.Key,
+		})
+		return nil, fmt.Errorf("%w: expected %d bytes, got %d", image.ErrInvalidSize, claims.Size, size)
 	}
 
 	// Validate size limit
@@ -73,7 +82,7 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
 			Key: claims.Key,
 		})
-		return nil, fmt.Errorf("file too large: max %d bytes", h.maxUploadBytes)
+		return nil, fmt.Errorf("%w: max %d bytes", image.ErrImageTooLarge, h.maxUploadBytes)
 	}
 
 	// Extract content type from token (S3 doesn't return ContentType in HeadObject in our abstraction)

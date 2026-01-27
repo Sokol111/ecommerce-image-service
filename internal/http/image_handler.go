@@ -8,6 +8,7 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/observability/tracing"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
+	"github.com/Sokol111/ecommerce-image-service/internal/apperrors"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
@@ -67,12 +68,26 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *httpapi.PresignRe
 
 		result, err := h.createPresignHandler.Handle(ctx, cmd)
 		if err != nil {
-			return &httpapi.CreatePresignInternalServerError{
-				Type:    *aboutBlankURL,
-				Title:   "Failed to create presign",
-				Status:  500,
-				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-			}, nil
+			// Map errors to appropriate HTTP status codes
+			switch {
+			case errors.Is(err, image.ErrUnsupportedMimeType),
+				errors.Is(err, image.ErrInvalidSize),
+				errors.Is(err, image.ErrImageTooLarge):
+				return &httpapi.CreatePresignBadRequest{
+					Type:    *aboutBlankURL,
+					Title:   "Invalid request",
+					Status:  400,
+					Detail:  httpapi.NewOptString(err.Error()),
+					TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+				}, nil
+			default:
+				return &httpapi.CreatePresignInternalServerError{
+					Type:    *aboutBlankURL,
+					Title:   "Failed to create presign",
+					Status:  500,
+					TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+				}, nil
+			}
 		}
 
 		uploadURL, _ := url.Parse(result.UploadURL)
@@ -116,12 +131,34 @@ func (h *imageHandler) ConfirmUpload(ctx context.Context, req *httpapi.ConfirmRe
 
 	img, err := h.confirmUploadHandler.Handle(ctx, cmd)
 	if err != nil {
-		return &httpapi.ConfirmUploadInternalServerError{
-			Type:    *aboutBlankURL,
-			Title:   "Failed to confirm upload",
-			Status:  500,
-			TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-		}, nil
+		// Map errors to appropriate HTTP status codes
+		switch {
+		case errors.Is(err, apperrors.ErrInvalidUploadToken),
+			errors.Is(err, image.ErrImageTooLarge),
+			errors.Is(err, image.ErrInvalidSize):
+			return &httpapi.ConfirmUploadBadRequest{
+				Type:    *aboutBlankURL,
+				Title:   "Invalid request",
+				Status:  400,
+				Detail:  httpapi.NewOptString(err.Error()),
+				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+			}, nil
+		case errors.Is(err, apperrors.ErrObjectNotFound):
+			return &httpapi.ConfirmUploadNotFound{
+				Type:    *aboutBlankURL,
+				Title:   "Object not found",
+				Status:  404,
+				Detail:  httpapi.NewOptString(err.Error()),
+				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+			}, nil
+		default:
+			return &httpapi.ConfirmUploadInternalServerError{
+				Type:    *aboutBlankURL,
+				Title:   "Failed to confirm upload",
+				Status:  500,
+				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+			}, nil
+		}
 	}
 
 	return toAPI(img), nil
@@ -141,12 +178,33 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 
 	images, err := h.promoteImagesHandler.Handle(ctx, cmd)
 	if err != nil {
-		return &httpapi.PromoteImagesInternalServerError{
-			Type:    *aboutBlankURL,
-			Title:   "Failed to promote images",
-			Status:  500,
-			TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-		}, nil
+		// Map errors to appropriate HTTP status codes
+		switch {
+		case errors.Is(err, apperrors.ErrInvalidImageOwner):
+			return &httpapi.PromoteImagesBadRequest{
+				Type:    *aboutBlankURL,
+				Title:   "Invalid request",
+				Status:  400,
+				Detail:  httpapi.NewOptString(err.Error()),
+				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+			}, nil
+		case errors.Is(err, apperrors.ErrDraftNotFound),
+			errors.Is(err, image.ErrImageNotFound):
+			return &httpapi.PromoteImagesNotFound{
+				Type:    *aboutBlankURL,
+				Title:   "Not found",
+				Status:  404,
+				Detail:  httpapi.NewOptString(err.Error()),
+				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+			}, nil
+		default:
+			return &httpapi.PromoteImagesInternalServerError{
+				Type:    *aboutBlankURL,
+				Title:   "Failed to promote images",
+				Status:  500,
+				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
+			}, nil
+		}
 	}
 
 	promoted := lo.Map(images, func(img *image.Image, _ int) httpapi.Image {
@@ -261,70 +319,6 @@ func (h *imageHandler) GetImage(ctx context.Context, params httpapi.GetImagePara
 	return toAPI(img), nil
 }
 
-func (h *imageHandler) ListImages(ctx context.Context, params httpapi.ListImagesParams) (httpapi.ListImagesRes, error) {
-	// TODO: implement
-	return &httpapi.ListImagesOK{
-		Items: []httpapi.Image{},
-	}, nil
-}
-
-func (h *imageHandler) GetDeliveryUrls(ctx context.Context, req *httpapi.BatchUrlRequest) (httpapi.GetDeliveryUrlsRes, error) {
-	urlParams := extractDeliveryURLParamsFromBatch(req)
-
-	urls := make([]httpapi.ImageUrl, 0, len(req.ImageIds))
-	notFound := make([]string, 0)
-
-	for _, imageID := range req.ImageIds {
-		q := query.GetDeliveryURLQuery{
-			ImageID: imageID,
-			Width:   urlParams.Width,
-			Height:  urlParams.Height,
-			Fit:     urlParams.Fit,
-			Quality: urlParams.Quality,
-			Format:  urlParams.Format,
-		}
-
-		result, err := h.getDeliveryURLHandler.Handle(ctx, q)
-		if err != nil {
-			if errors.Is(err, image.ErrImageNotFound) {
-				notFound = append(notFound, imageID)
-				continue
-			}
-			return &httpapi.GetDeliveryUrlsInternalServerError{
-				Type:    *aboutBlankURL,
-				Title:   "Failed to get delivery URLs",
-				Status:  500,
-				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-			}, nil
-		}
-
-		urls = append(urls, buildImageURL(imageID, result))
-	}
-
-	return &httpapi.BatchUrlResponse{
-		Urls:     urls,
-		NotFound: notFound,
-	}, nil
-}
-
-func (h *imageHandler) ProcessImage(ctx context.Context, req *httpapi.ProcessImageReq) (httpapi.ProcessImageRes, error) {
-	// TODO: implement
-	return &httpapi.Problem{
-		Type:   *aboutBlankURL,
-		Title:  "Not implemented",
-		Status: 501,
-	}, nil
-}
-
-func (h *imageHandler) UpdateImage(ctx context.Context, req *httpapi.ImagePatch, params httpapi.UpdateImageParams) (httpapi.UpdateImageRes, error) {
-	// TODO: implement
-	return &httpapi.UpdateImageInternalServerError{
-		Type:   *aboutBlankURL,
-		Title:  "Not implemented",
-		Status: 501,
-	}, nil
-}
-
 func toAPI(img *image.Image) *httpapi.Image {
 	return &httpapi.Image{
 		ID:         img.ID,
@@ -371,31 +365,6 @@ func extractDeliveryURLParams(w, h httpapi.OptInt, fit httpapi.OptGetDeliveryUrl
 	return params
 }
 
-// extractDeliveryURLParamsFromBatch extracts optional parameters from batch request
-func extractDeliveryURLParamsFromBatch(req *httpapi.BatchUrlRequest) deliveryURLParams {
-	params := deliveryURLParams{}
-
-	if req.W.IsSet() {
-		params.Width = &req.W.Value
-	}
-	if req.H.IsSet() {
-		params.Height = &req.H.Value
-	}
-	if req.Fit.IsSet() {
-		f := string(req.Fit.Value)
-		params.Fit = &f
-	}
-	if req.Quality.IsSet() {
-		params.Quality = &req.Quality.Value
-	}
-	if req.Format.IsSet() {
-		f := string(req.Format.Value)
-		params.Format = &f
-	}
-
-	return params
-}
-
 // buildDeliveryURLResponse builds HTTP response for single delivery URL
 func buildDeliveryURLResponse(result *query.GetDeliveryURLResult) *httpapi.GetDeliveryUrlOK {
 	parsedURL, _ := url.Parse(result.URL)
@@ -406,17 +375,4 @@ func buildDeliveryURLResponse(result *query.GetDeliveryURLResult) *httpapi.GetDe
 		response.ExpiresAt = httpapi.NewOptDateTime(*result.ExpiresAt)
 	}
 	return response
-}
-
-// buildImageURL builds ImageUrl response for batch delivery URLs
-func buildImageURL(imageID string, result *query.GetDeliveryURLResult) httpapi.ImageUrl {
-	parsedURL, _ := url.Parse(result.URL)
-	imgUrl := httpapi.ImageUrl{
-		ImageId: imageID,
-		URL:     *parsedURL,
-	}
-	if result.ExpiresAt != nil {
-		imgUrl.ExpiresAt = httpapi.NewOptDateTime(*result.ExpiresAt)
-	}
-	return imgUrl
 }
