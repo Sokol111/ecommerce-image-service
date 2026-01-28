@@ -30,7 +30,7 @@ type customClaims struct {
 }
 
 func (s *jwtTokenService) GenerateUploadToken(ctx context.Context, claims *abstraction.UploadTokenClaims, ttl time.Duration) (string, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	expiresAt := now.Add(ttl)
 
 	jwtClaims := customClaims{
@@ -79,7 +79,7 @@ func (s *jwtTokenService) ValidateUploadToken(ctx context.Context, tokenString s
 	}
 
 	// Validate expiration (jwt library does this automatically, but we double-check)
-	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
+	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now().UTC()) {
 		return nil, fmt.Errorf("token expired")
 	}
 

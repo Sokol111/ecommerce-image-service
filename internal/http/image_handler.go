@@ -218,7 +218,7 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, params httpapi.GetDel
 	urlParams := extractDeliveryURLParams(params.W, params.H, params.Fit, params.Quality, params.Dpr, params.Format)
 
 	if params.TtlSeconds.IsSet() {
-		t := time.Now().Add(time.Duration(params.TtlSeconds.Value) * time.Second)
+		t := time.Now().UTC().Add(time.Duration(params.TtlSeconds.Value) * time.Second)
 		urlParams.Expires = &t
 	}
 
