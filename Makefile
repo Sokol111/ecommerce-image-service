@@ -161,16 +161,6 @@ vuln-check: ## Check for known vulnerabilities
 		exit 1; \
 	fi
 
-.PHONY: sec-scan
-sec-scan: ## Run security scanner (gosec)
-	@echo "$(COLOR_GREEN)Running security scan...$(COLOR_RESET)"
-	@if command -v gosec >/dev/null 2>&1; then \
-		gosec -fmt=json -out=gosec-report.json -stdout -verbose=text ./...; \
-	else \
-		echo "$(COLOR_YELLOW)gosec not installed. Install: go install github.com/securego/gosec/v2/cmd/gosec@latest$(COLOR_RESET)"; \
-		exit 1; \
-	fi
-
 .PHONY: license-check
 license-check: ## Check licenses of dependencies
 	@echo "$(COLOR_GREEN)Checking licenses...$(COLOR_RESET)"
