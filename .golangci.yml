@@ -1,20 +1,26 @@
 # Service-specific golangci-lint configuration
 # Services have slightly relaxed rules compared to libraries
+# golangci-lint v2 format
+
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 linters:
+  default: none
   enable:
     # Correctness
     - exhaustive
     - govet
     - errcheck
-    - staticcheck
+    - staticcheck  # includes gosimple, stylecheck in v2
     
     # Code quality
     - unused
-    - gosimple
     - ineffassign
-    - gofmt
-    - goimports
     
     # Best practices
     - errname
@@ -31,90 +37,87 @@ linters:
     
     # Style
     - revive
-    - stylecheck
     - misspell
     
     # Complexity
     - gocyclo
 
-linters-settings:
-  exhaustive:
-    check-generated: false
-    default-signifies-exhaustive: false
-    check:
-      - switch
-      - map
-    ignore-enum-types: ""
-    explicit-exhaustive-switch: true
-  
-  errcheck:
-    check-blank: true
-    check-type-assertions: true
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: false
+      check:
+        - switch
+        - map
+      ignore-enum-types: ""
+      explicit-exhaustive-switch: true
     
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
+    errcheck:
+      check-blank: true
+      check-type-assertions: true
+      
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+      
+    revive:
+      rules:
+        - name: var-naming
+          severity: warning
+        - name: context-as-argument
+          severity: warning
+        - name: error-return
+          severity: warning
+        - name: error-strings
+          severity: warning
+        - name: error-naming
+          severity: warning
     
-  revive:
+    gosec:
+      excludes:
+        - G104
+    
+    gocyclo:
+      min-complexity: 20  # Services can have slightly higher complexity
+    
+    staticcheck:
+      checks: ["all", "-ST1000", "-ST1003"]
+
+  exclusions:
+    generated: lax
     rules:
-      - name: var-naming
-        severity: warning
-      - name: context-as-argument
-        severity: warning
-      - name: error-return
-        severity: warning
-      - name: error-strings
-        severity: warning
-      - name: error-naming
-        severity: warning
-  
-  gosec:
-    excludes:
-      - G104
-  
-  gocyclo:
-    min-complexity: 20  # Services can have slightly higher complexity
-  
-  stylecheck:
-    checks: ["all", "-ST1000", "-ST1003"]
+      - path: '_test\.go'
+        linters:
+          - errcheck
+          - gosec
+          - revive
+          - gocyclo  # Test functions often have high complexity
+      
+      - path: '.*\.gen\.go$'
+        linters:
+          - all
+      
+      - path: 'vendor/'
+        linters:
+          - all
+      
+      - path: 'internal/http/'
+        linters:
+          - errcheck
+        text: "Error return value of.*WriteHeader.*is not checked"
+
+    paths:
+      - vendor
+      - testdata
+      - bin
+      - mocks
+      - '.*\.gen\.go$'
 
 issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - gosec
-        - revive
-        - gocyclo  # Test functions often have high complexity
-    
-    - path: ".*\\.gen\\.go$"
-      linters:
-        - all
-    
-    - path: vendor/
-      linters:
-        - all
-    
-    - path: internal/http/
-      linters:
-        - errcheck
-      text: "Error return value of.*WriteHeader.*is not checked"
-  
-  exclude-dirs:
-    - vendor
-    - testdata
-    - bin
-    - mocks
-  
-  exclude-files:
-    - ".*\\.gen\\.go$"
-  
   new: false
   max-issues-per-linter: 0
   max-same-issues: 0
 
 run:
-  timeout: 5m
   tests: true
   concurrency: 4
