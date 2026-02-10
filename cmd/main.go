@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 
-	"github.com/Sokol111/ecommerce-commons/pkg/modules"
-	"github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
+	commons_core "github.com/Sokol111/ecommerce-commons/pkg/core"
+	commons_http "github.com/Sokol111/ecommerce-commons/pkg/http"
+	commons_messaging "github.com/Sokol111/ecommerce-commons/pkg/messaging"
+	commons_observability "github.com/Sokol111/ecommerce-commons/pkg/observability"
+	commons_persistence "github.com/Sokol111/ecommerce-commons/pkg/persistence"
+	commons_swaggerui "github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/http"
@@ -18,12 +22,13 @@ import (
 )
 
 var AppModules = fx.Options(
-	// Infrastructure - Core
-	modules.NewCoreModule(),
-	modules.NewPersistenceModule(),
-	modules.NewHTTPModule(),
-	modules.NewObservabilityModule(),
-	modules.NewMessagingModule(),
+	// Commons
+	commons_core.NewCoreModule(),
+	commons_persistence.NewPersistenceModule(),
+	commons_http.NewHTTPModule(),
+	commons_observability.NewObservabilityModule(),
+	commons_messaging.NewMessagingModule(),
+	commons_swaggerui.NewSwaggerModule(commons_swaggerui.SwaggerConfig{OpenAPIContent: httpapi.OpenAPIDoc}),
 
 	// Infrastructure - External Services
 	s3.NewS3Module(),
@@ -41,7 +46,6 @@ var AppModules = fx.Options(
 
 	// HTTP
 	http.NewHttpHandlerModule(),
-	swaggerui.NewSwaggerModule(swaggerui.SwaggerConfig{OpenAPIContent: httpapi.OpenAPIDoc}),
 )
 
 func main() {

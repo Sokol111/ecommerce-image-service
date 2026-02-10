@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
-	"github.com/Sokol111/ecommerce-commons/pkg/persistence"
+	"github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 	"go.uber.org/zap"
@@ -38,7 +38,7 @@ func (h *deleteImageHandler) Handle(ctx context.Context, cmd DeleteImageCommand)
 	// Get image from repository
 	img, err := h.repo.FindByID(ctx, cmd.ImageID)
 	if err != nil {
-		if err == persistence.ErrEntityNotFound {
+		if err == mongo.ErrEntityNotFound {
 			return image.ErrImageNotFound
 		}
 		return fmt.Errorf("failed to get image: %w", err)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
-	"github.com/Sokol111/ecommerce-commons/pkg/persistence"
+	"github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
 	"github.com/Sokol111/ecommerce-image-service/internal/apperrors"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
@@ -33,13 +33,13 @@ type promoteImagesHandler struct {
 	objStorage   abstraction.ObjectStorage
 	signer       abstraction.ImgproxySigner
 	outbox       outbox.Outbox
-	txManager    persistence.TxManager
+	txManager    mongo.TxManager
 	smallWidth   int
 	largeWidth   int
 	imageQuality int
 }
 
-func NewPromoteImagesHandler(repo image.Repository, objStorage abstraction.ObjectStorage, signer abstraction.ImgproxySigner, outbox outbox.Outbox, txManager persistence.TxManager, smallWidth, largeWidth, quality int) PromoteImagesCommandHandler {
+func NewPromoteImagesHandler(repo image.Repository, objStorage abstraction.ObjectStorage, signer abstraction.ImgproxySigner, outbox outbox.Outbox, txManager mongo.TxManager, smallWidth, largeWidth, quality int) PromoteImagesCommandHandler {
 	return &promoteImagesHandler{
 		repo:         repo,
 		objStorage:   objStorage,
@@ -260,7 +260,7 @@ func (h *promoteImagesHandler) deleteSourceFiles(ctx context.Context, results []
 
 // executePromotion runs DB updates and outbox creation in a transaction
 func (h *promoteImagesHandler) executePromotion(ctx context.Context, copyResults []copyResult, productID string) (*promoteResult, error) {
-	return persistence.WithTransaction(ctx, h.txManager, func(txCtx context.Context) (*promoteResult, error) {
+	return mongo.WithTransaction(ctx, h.txManager, func(txCtx context.Context) (*promoteResult, error) {
 		return h.promoteInTransaction(txCtx, copyResults, productID)
 	})
 }

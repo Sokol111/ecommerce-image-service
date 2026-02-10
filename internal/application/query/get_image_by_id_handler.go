@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Sokol111/ecommerce-commons/pkg/persistence"
+	"github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
 )
 
@@ -30,7 +30,7 @@ func NewGetImageByIDHandler(repo image.Repository) GetImageByIDQueryHandler {
 func (h *getImageByIDHandler) Handle(ctx context.Context, query GetImageByIDQuery) (*image.Image, error) {
 	img, err := h.repo.FindByID(ctx, query.ID)
 	if err != nil {
-		if errors.Is(err, persistence.ErrEntityNotFound) {
+		if errors.Is(err, mongo.ErrEntityNotFound) {
 			return nil, image.ErrImageNotFound
 		}
 		return nil, fmt.Errorf("failed to get image: %w", err)
