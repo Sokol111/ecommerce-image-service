@@ -45,7 +45,7 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 	// Validate and extract claims from upload token
 	claims, err := h.tokenService.ValidateUploadToken(ctx, cmd.UploadToken)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", apperrors.ErrInvalidUploadToken, err)
+		return nil, fmt.Errorf("%w: %w", apperrors.ErrInvalidUploadToken, err)
 	}
 
 	// Verify object exists in S3
@@ -71,7 +71,7 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 			zap.Int64("actual", size),
 			zap.String("key", claims.Key),
 		)
-		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
+		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{ //nolint:errcheck // best-effort cleanup
 			Key: claims.Key,
 		})
 		return nil, fmt.Errorf("%w: expected %d bytes, got %d", image.ErrInvalidSize, claims.Size, size)
@@ -79,7 +79,7 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 
 	// Validate size limit
 	if h.maxUploadBytes > 0 && size > h.maxUploadBytes {
-		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{
+		_ = h.objStorage.DeleteObject(ctx, &abstraction.DeleteObjectInput{ //nolint:errcheck // best-effort cleanup
 			Key: claims.Key,
 		})
 		return nil, fmt.Errorf("%w: max %d bytes", image.ErrImageTooLarge, h.maxUploadBytes)

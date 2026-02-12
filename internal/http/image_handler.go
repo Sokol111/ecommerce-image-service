@@ -1,4 +1,4 @@
-package http
+package http //nolint:revive // package name intentional
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/samber/lo"
 )
 
-var aboutBlankURL, _ = url.Parse("about:blank")
+var aboutBlankURL, _ = url.Parse("about:blank") //nolint:errcheck // static URL always valid
 
 // deliveryURLParams holds extracted optional parameters for delivery URL generation
 type deliveryURLParams struct {
@@ -90,7 +90,7 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *httpapi.PresignRe
 			}
 		}
 
-		uploadURL, _ := url.Parse(result.UploadURL)
+		uploadURL, _ := url.Parse(result.UploadURL) //nolint:errcheck // URL from service always valid
 		return &httpapi.PresignResponse{
 			UploadUrl:   *uploadURL,
 			UploadToken: result.UploadToken,
@@ -214,7 +214,7 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 	return &httpapi.PromoteImagesOK{Promoted: promoted}, nil
 }
 
-func (h *imageHandler) GetDeliveryUrl(ctx context.Context, params httpapi.GetDeliveryUrlParams) (httpapi.GetDeliveryUrlRes, error) {
+func (h *imageHandler) GetDeliveryUrl(ctx context.Context, params httpapi.GetDeliveryUrlParams) (httpapi.GetDeliveryUrlRes, error) { //nolint:revive // name from OpenAPI spec
 	urlParams := extractDeliveryURLParams(params.W, params.H, params.Fit, params.Quality, params.Dpr, params.Format)
 
 	if params.TtlSeconds.IsSet() {
@@ -367,7 +367,7 @@ func extractDeliveryURLParams(w, h httpapi.OptInt, fit httpapi.OptGetDeliveryUrl
 
 // buildDeliveryURLResponse builds HTTP response for single delivery URL
 func buildDeliveryURLResponse(result *query.GetDeliveryURLResult) *httpapi.GetDeliveryUrlOK {
-	parsedURL, _ := url.Parse(result.URL)
+	parsedURL, _ := url.Parse(result.URL) //nolint:errcheck // URL from service always valid
 	response := &httpapi.GetDeliveryUrlOK{
 		URL: *parsedURL,
 	}

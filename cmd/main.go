@@ -45,7 +45,7 @@ var AppModules = fx.Options(
 	application.Module(),
 
 	// HTTP
-	http.NewHttpHandlerModule(),
+	http.NewHTTPHandlerModule(),
 )
 
 func main() {

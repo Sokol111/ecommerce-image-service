@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
@@ -38,7 +39,7 @@ func (h *deleteImageHandler) Handle(ctx context.Context, cmd DeleteImageCommand)
 	// Get image from repository
 	img, err := h.repo.FindByID(ctx, cmd.ImageID)
 	if err != nil {
-		if err == mongo.ErrEntityNotFound {
+		if errors.Is(err, mongo.ErrEntityNotFound) {
 			return image.ErrImageNotFound
 		}
 		return fmt.Errorf("failed to get image: %w", err)

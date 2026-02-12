@@ -185,7 +185,7 @@ func (h *promoteImagesHandler) copyImage(ctx context.Context, img *image.Image, 
 	targetKey := "products/" + productID + "/" + strings.TrimPrefix(img.Key, srcPrefix)
 
 	// Check if target already exists (idempotency)
-	exists, _ := h.objStorage.ObjectExists(ctx, targetKey)
+	exists, _ := h.objStorage.ObjectExists(ctx, targetKey) //nolint:errcheck // error means object doesn't exist
 	if exists {
 		return copyResult{
 			Image:     img,
@@ -302,7 +302,7 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 // sendOutboxMessages sends all outbox messages after successful transaction
 func (h *promoteImagesHandler) sendOutboxMessages(ctx context.Context, sends []outbox.SendFunc) {
 	for _, send := range sends {
-		_ = send(ctx)
+		_ = send(ctx) //nolint:errcheck // best-effort send, errors already logged in outbox
 	}
 }
 

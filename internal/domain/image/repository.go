@@ -1,4 +1,4 @@
-package image
+package image //nolint:revive // package name intentional
 
 import "context"
 

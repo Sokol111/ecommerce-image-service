@@ -1,4 +1,4 @@
-package http
+package http //nolint:revive // package name intentional
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 )
 
-func NewHttpHandlerModule() fx.Option {
+func NewHTTPHandlerModule() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			newImageHandler,

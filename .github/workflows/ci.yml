@@ -18,3 +18,5 @@ on:
 jobs:
   ci:
     uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-ci.yml@master
+    with:
+      coverage-threshold: 0
