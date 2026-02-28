@@ -12,12 +12,11 @@ mongo:
   replica-set: rs0
   migrations:
     enabled: true
-    auto-migrate: true
 
 kafka:
-  brokers: "kafka:29092"
+  brokers: "redpanda:29092"
   schema-registry:
-    url: "http://schema-registry:8081"
+    url: "http://redpanda:8081"
     auto-register-schemas: true
   consumers-config:
     default-group-id: "ecommerce-image-service"

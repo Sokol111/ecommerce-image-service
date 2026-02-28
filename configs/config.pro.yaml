@@ -20,7 +20,6 @@ mongo:
   replica-set: rs0
   migrations:
     enabled: true
-    auto-migrate: true
 
 observability:
   otel-collector-endpoint: http://otel-collector:4317
