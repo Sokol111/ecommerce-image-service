@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
@@ -10,17 +11,21 @@ import (
 )
 
 type presigner struct {
-	minioClient *minio.Client
-	bucket      string
-	ttl         time.Duration
+	minioClient    *minio.Client
+	bucket         string
+	ttl            time.Duration
+	publicEndpoint string // if set, rewrite presigned URLs to use this endpoint
 }
 
-// newPresigner creates a new Presigner implementation
-func newPresigner(minioClient *minio.Client, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
+// newPresigner creates a new Presigner implementation.
+// If public-endpoint is configured, presigned URLs are rewritten to use it
+// so browsers can reach S3/MinIO directly.
+func newPresigner(client *minio.Client, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
 	return &presigner{
-		minioClient: minioClient,
-		bucket:      s3Cfg.Bucket,
-		ttl:         appCfg.PresignTTL,
+		minioClient:    client,
+		bucket:         s3Cfg.Bucket,
+		ttl:            appCfg.PresignTTL,
+		publicEndpoint: s3Cfg.PublicEndpoint,
 	}
 }
 
@@ -53,13 +58,20 @@ func (p *presigner) CreatePostPolicy(ctx context.Context, input *abstraction.Pos
 	}
 
 	// Generate presigned POST policy
-	url, formData, err := p.minioClient.PresignedPostPolicy(ctx, policy)
+	presignedURL, formData, err := p.minioClient.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return nil, err
 	}
 
+	// Rewrite URL to use public endpoint if configured
+	if p.publicEndpoint != "" {
+		pub, _ := url.Parse(p.publicEndpoint)
+		presignedURL.Scheme = pub.Scheme
+		presignedURL.Host = pub.Host
+	}
+
 	return &abstraction.PostPolicyOutput{
-		URL:        url.String(),
+		URL:        presignedURL.String(),
 		FormData:   formData,
 		TTLSeconds: int(p.ttl.Seconds()),
 	}, nil

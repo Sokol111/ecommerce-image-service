@@ -13,26 +13,20 @@ import (
 func NewS3Module() fx.Option {
 	return fx.Provide(
 		newConfig,
-		newMinioClient,   // *minio.Client
+		newMinioClient,   // *minio.Client — uses internal endpoint (e.g. http://minio:9000)
 		newPresigner,     // abstraction.Presigner
 		newObjectStorage, // abstraction.ObjectStorage
 	)
 }
 
-// newMinioClient creates a MinIO client that works with any S3-compatible storage
+// newMinioClient creates a MinIO client using the internal endpoint for all S3 operations.
 func newMinioClient(cfg Config) (*minio.Client, error) {
 	if cfg.AccessKeyID == "" || cfg.SecretKey == "" {
 		return nil, fmt.Errorf("missing required S3 credentials: access-key-id and secret-key must both be set")
 	}
 
-	// Use public endpoint for presigned URLs if configured
-	endpoint := cfg.Endpoint
-	if cfg.PublicEndpoint != "" {
-		endpoint = cfg.PublicEndpoint
-	}
-
 	// Parse endpoint to extract host and scheme
-	host, secure := parseEndpoint(endpoint)
+	host, secure := parseEndpoint(cfg.Endpoint)
 
 	// Create custom HTTP transport with connection pooling
 	transport := &http.Transport{

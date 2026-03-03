@@ -81,12 +81,7 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *httpapi.PresignRe
 					TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
 				}, nil
 			default:
-				return &httpapi.CreatePresignInternalServerError{
-					Type:    *aboutBlankURL,
-					Title:   "Failed to create presign",
-					Status:  500,
-					TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-				}, nil
+				return nil, err
 			}
 		}
 
@@ -152,12 +147,7 @@ func (h *imageHandler) ConfirmUpload(ctx context.Context, req *httpapi.ConfirmRe
 				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
 			}, nil
 		default:
-			return &httpapi.ConfirmUploadInternalServerError{
-				Type:    *aboutBlankURL,
-				Title:   "Failed to confirm upload",
-				Status:  500,
-				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-			}, nil
+			return nil, err
 		}
 	}
 
@@ -198,12 +188,7 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
 			}, nil
 		default:
-			return &httpapi.PromoteImagesInternalServerError{
-				Type:    *aboutBlankURL,
-				Title:   "Failed to promote images",
-				Status:  500,
-				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-			}, nil
+			return nil, err
 		}
 	}
 
@@ -243,12 +228,7 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, params httpapi.GetDel
 				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
 			}, nil
 		}
-		return &httpapi.GetDeliveryUrlInternalServerError{
-			Type:    *aboutBlankURL,
-			Title:   "Failed to get delivery URL",
-			Status:  500,
-			TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-		}, nil
+		return nil, err
 	}
 
 	return buildDeliveryURLResponse(result), nil
@@ -272,12 +252,7 @@ func (h *imageHandler) DeleteImage(ctx context.Context, params httpapi.DeleteIma
 				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
 			}, nil
 		}
-		return &httpapi.DeleteImageInternalServerError{
-			Type:    *aboutBlankURL,
-			Title:   "Failed to delete image",
-			Status:  500,
-			TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-		}, nil
+		return nil, err
 	}
 
 	return &httpapi.DeleteImageNoContent{}, nil
@@ -299,12 +274,7 @@ func (h *imageHandler) GetImage(ctx context.Context, params httpapi.GetImagePara
 				TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
 			}, nil
 		}
-		return &httpapi.GetImageInternalServerError{
-			Type:    *aboutBlankURL,
-			Title:   "Failed to get image",
-			Status:  500,
-			TraceId: httpapi.NewOptString(tracing.GetTraceID(ctx)),
-		}, nil
+		return nil, err
 	}
 
 	if img.IsDeleted() {
