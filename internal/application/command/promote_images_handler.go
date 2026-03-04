@@ -18,8 +18,8 @@ import (
 
 // PromoteImagesCommand represents a request to promote draft images to product
 type PromoteImagesCommand struct {
-	DraftID   string
-	ImageIDs  *[]string
+	DraftID   string    // Optional: required only when ImageIDs is empty (promote all draft images)
+	ImageIDs  *[]string // Optional: if provided, only these images are promoted
 	ProductID string
 }
 
@@ -73,12 +73,12 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 	}
 
 	if len(images) == 0 {
-		h.log(ctx).Debug("no images to promote", zap.String("draftID", cmd.DraftID), zap.String("productID", cmd.ProductID))
+		h.log(ctx).Debug("no images to promote", zap.String("productID", cmd.ProductID))
 		return []*image.Image{}, nil
 	}
 
 	// Phase 1: Copy files (without deleting originals)
-	copyResults, err := h.copyImages(ctx, images, cmd.DraftID, cmd.ProductID)
+	copyResults, err := h.copyImages(ctx, images, cmd.ProductID)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,11 @@ func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd Promo
 
 	// If specific IDs provided, fetch them directly and check their state
 	if len(imageIDs) > 0 {
-		return h.getSpecificImagesToPromote(ctx, imageIDs, cmd.DraftID, cmd.ProductID)
+		return h.getSpecificImagesToPromote(ctx, imageIDs, cmd.ProductID)
+	}
+
+	if cmd.DraftID == "" {
+		return nil, fmt.Errorf("%w: draftId is required when imageIds are not specified", apperrors.ErrInvalidImageOwner)
 	}
 
 	// Get all images from draft
@@ -127,7 +131,7 @@ func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd Promo
 }
 
 // getSpecificImagesToPromote fetches specific images and validates their state for idempotency
-func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, imageIDs []string, draftID, productID string) ([]*image.Image, error) {
+func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, imageIDs []string, productID string) ([]*image.Image, error) {
 	images, err := h.repo.FindByIDs(ctx, imageIDs)
 	if err != nil {
 		return nil, fmt.Errorf("find images by IDs: %w", err)
@@ -140,7 +144,7 @@ func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, i
 	var toPromote []*image.Image
 	for _, img := range images {
 		switch {
-		case img.OwnerType == string(image.OwnerTypeDraft) && img.OwnerID == draftID:
+		case img.OwnerType == string(image.OwnerTypeDraft):
 			toPromote = append(toPromote, img)
 
 		case img.OwnerType == string(image.OwnerTypeProduct) && img.OwnerID == productID:
@@ -158,12 +162,11 @@ func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, i
 }
 
 // copyImages copies S3 objects without deleting originals (Phase 1)
-func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.Image, draftID, productID string) ([]copyResult, error) {
-	srcPrefix := "drafts/" + draftID + "/"
+func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.Image, productID string) ([]copyResult, error) {
 	var results []copyResult
 
 	for _, img := range images {
-		result, err := h.copyImage(ctx, img, srcPrefix, productID)
+		result, err := h.copyImage(ctx, img, productID)
 		if err != nil {
 			// Rollback already copied files on error
 			h.rollbackCopiedFiles(ctx, results)
@@ -176,7 +179,8 @@ func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.I
 }
 
 // copyImage copies a single image to target location
-func (h *promoteImagesHandler) copyImage(ctx context.Context, img *image.Image, srcPrefix, productID string) (copyResult, error) {
+func (h *promoteImagesHandler) copyImage(ctx context.Context, img *image.Image, productID string) (copyResult, error) {
+	srcPrefix := "drafts/" + img.OwnerID + "/"
 	if !strings.HasPrefix(img.Key, srcPrefix) {
 		return copyResult{}, fmt.Errorf("image %s has key outside draft prefix: %s", img.ID, img.Key)
 	}

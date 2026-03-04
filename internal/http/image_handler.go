@@ -160,8 +160,13 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 		imageIDs = &req.Images
 	}
 
+	var draftID string
+	if req.DraftId.IsSet() {
+		draftID = req.DraftId.Value
+	}
+
 	cmd := command.PromoteImagesCommand{
-		DraftID:   req.DraftId,
+		DraftID:   draftID,
 		ImageIDs:  imageIDs,
 		ProductID: req.ProductId,
 	}

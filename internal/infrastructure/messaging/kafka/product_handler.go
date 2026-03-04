@@ -35,7 +35,6 @@ func (h *productHandler) handleProductUpdated(ctx context.Context, e *events.Pro
 	}
 
 	cmd := command.PromoteImagesCommand{
-		DraftID:   e.Payload.ProductID,
 		ImageIDs:  imageIDs,
 		ProductID: e.Payload.ProductID,
 	}
