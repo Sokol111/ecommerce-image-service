@@ -63,6 +63,7 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *httpapi.PresignRe
 			Filename:    req.Filename,
 			OwnerType:   string(req.OwnerType),
 			OwnerID:     req.OwnerId,
+			Role:        string(req.Role),
 			Size:        int64(req.Size),
 		}
 
