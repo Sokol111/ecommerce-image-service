@@ -54,8 +54,9 @@ func NewPromoteImagesHandler(repo image.Repository, objStorage abstraction.Objec
 
 // promoteResult holds the result of the promotion transaction
 type promoteResult struct {
-	Promoted []*image.Image
-	Sends    []outbox.SendFunc
+	Promoted     []*image.Image
+	Sends        []outbox.SendFunc
+	OldImageKeys []string // S3 keys of replaced product images for cleanup
 }
 
 // copyResult holds the result of copying images
@@ -93,6 +94,7 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 
 	// Phase 3: Success - delete old files (best effort)
 	h.deleteSourceFiles(ctx, copyResults)
+	h.deleteOldProductImages(ctx, result.OldImageKeys)
 
 	h.log(ctx).Debug("images promoted", zap.Int("count", len(result.Promoted)), zap.String("productID", cmd.ProductID))
 
@@ -271,6 +273,12 @@ func (h *promoteImagesHandler) executePromotion(ctx context.Context, copyResults
 
 // promoteInTransaction performs the actual promotion logic within a transaction
 func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyResults []copyResult, productID string) (*promoteResult, error) {
+	// Soft-delete existing product images
+	oldImageKeys, err := h.softDeleteOldProductImages(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
 	var promoted []*image.Image
 	var sends []outbox.SendFunc
 
@@ -298,8 +306,9 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 	}
 
 	return &promoteResult{
-		Promoted: promoted,
-		Sends:    sends,
+		Promoted:     promoted,
+		Sends:        sends,
+		OldImageKeys: oldImageKeys,
 	}, nil
 }
 
@@ -307,6 +316,48 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 func (h *promoteImagesHandler) sendOutboxMessages(ctx context.Context, sends []outbox.SendFunc) {
 	for _, send := range sends {
 		_ = send(ctx) //nolint:errcheck // best-effort send, errors already logged in outbox
+	}
+}
+
+// softDeleteOldProductImages marks existing product images as deleted within the transaction
+func (h *promoteImagesHandler) softDeleteOldProductImages(ctx context.Context, productID string) ([]string, error) {
+	existing, err := h.repo.FindByOwner(ctx, string(image.OwnerTypeProduct), productID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("find existing product images: %w", err)
+	}
+
+	if len(existing) == 0 {
+		return nil, nil
+	}
+
+	var keys []string
+	for _, img := range existing {
+		img.MarkAsDeleted()
+		if _, err := h.repo.Update(ctx, img); err != nil {
+			return nil, fmt.Errorf("soft-delete old image %s: %w", img.ID, err)
+		}
+		keys = append(keys, img.Key)
+	}
+
+	h.log(ctx).Debug("soft-deleted old product images",
+		zap.Int("count", len(existing)),
+		zap.String("productID", productID),
+	)
+
+	return keys, nil
+}
+
+// deleteOldProductImages deletes S3 objects of replaced product images (best effort)
+func (h *promoteImagesHandler) deleteOldProductImages(ctx context.Context, keys []string) {
+	if len(keys) == 0 {
+		return
+	}
+
+	if err := h.objStorage.DeleteObjects(ctx, keys); err != nil {
+		h.log(ctx).Warn("failed to delete old product image files",
+			zap.Strings("keys", keys),
+			zap.Error(err),
+		)
 	}
 }
 
