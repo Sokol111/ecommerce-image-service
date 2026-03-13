@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -65,7 +66,10 @@ func (p *presigner) CreatePostPolicy(ctx context.Context, input *abstraction.Pos
 
 	// Rewrite URL to use public endpoint if configured
 	if p.publicEndpoint != "" {
-		pub, _ := url.Parse(p.publicEndpoint)
+		pub, err := url.Parse(p.publicEndpoint)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse public endpoint %q: %w", p.publicEndpoint, err)
+		}
 		presignedURL.Scheme = pub.Scheme
 		presignedURL.Host = pub.Host
 	}
