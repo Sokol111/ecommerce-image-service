@@ -20,5 +20,3 @@ jobs:
   release:
     needs: ci
     uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-release.yml@master
-    secrets:
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
