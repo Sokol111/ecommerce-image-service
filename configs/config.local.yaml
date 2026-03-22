@@ -10,8 +10,6 @@ mongo:
   port: 27017
   database: "image"
   replica-set: rs0
-  migrations:
-    enabled: true
 
 kafka:
   brokers: "redpanda:29092"
