@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/Sokol111/ecommerce-catalog-service-api v1.1.3
-	github.com/Sokol111/ecommerce-commons v0.5.3
+	github.com/Sokol111/ecommerce-commons v0.5.4
 	github.com/Sokol111/ecommerce-image-service-api v1.1.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -24,7 +24,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
@@ -40,7 +40,7 @@ require (
 	github.com/hamba/avro/v2 v2.31.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -49,9 +49,9 @@ require (
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/montanaflynn/stats v0.8.2 // indirect
-	github.com/ogen-go/ogen v1.20.1 // indirect
-	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
+	github.com/montanaflynn/stats v0.9.0 // indirect
+	github.com/ogen-go/ogen v1.20.2 // indirect
+	github.com/pelletier/go-toml/v2 v2.3.0 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/rs/xid v1.6.0 // indirect
@@ -73,7 +73,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo v0.0.0-20260313150254-340d326bb900 // indirect
+	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo v0.0.0-20260327131730-b24435fbe205 // indirect
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.67.0 // indirect
 	go.opentelemetry.io/otel v1.42.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.42.0 // indirect
@@ -94,9 +94,9 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
-	google.golang.org/grpc v1.79.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260319201613-d00831a3d3e7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260319201613-d00831a3d3e7 // indirect
+	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
