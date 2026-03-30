@@ -6,21 +6,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/v2"
 )
 
 type Config struct {
-	PublicBaseURL  string `mapstructure:"public-base-url"` // IMGPROXY_PUBLIC_BASE_URL
-	KeyHex         string `mapstructure:"key-hex"`         // IMGPROXY_KEY_HEX
-	SaltHex        string `mapstructure:"salt-hex"`        // IMGPROXY_SALT_HEX
+	PublicBaseURL  string `koanf:"public-base-url"` // IMGPROXY_PUBLIC_BASE_URL
+	KeyHex         string `koanf:"key-hex"`         // IMGPROXY_KEY_HEX
+	SaltHex        string `koanf:"salt-hex"`        // IMGPROXY_SALT_HEX
 	DefaultQuality int
 	Key            []byte
 	Salt           []byte
 }
 
-func newConfig(v *viper.Viper) (Config, error) {
+func newConfig(k *koanf.Koanf) (Config, error) {
 	var cfg Config
-	if err := v.Sub("imgproxy").UnmarshalExact(&cfg); err != nil {
+	if err := k.Unmarshal("imgproxy", &cfg); err != nil {
 		return cfg, fmt.Errorf("failed to load imgproxy config: %w", err)
 	}
 	if cfg.PublicBaseURL == "" {

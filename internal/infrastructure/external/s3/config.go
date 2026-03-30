@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/v2"
 )
 
 type Config struct {
 	// Core
-	Bucket         string `mapstructure:"bucket"`          // Target bucket (e.g., "products")
-	Region         string `mapstructure:"region"`          // e.g., "us-east-1"; MinIO accepts any non-empty value
-	Endpoint       string `mapstructure:"endpoint"`        // e.g., "http://minio:9000" or leave empty for AWS S3
-	PublicEndpoint string `mapstructure:"public-endpoint"` // e.g., "http://localhost:9000" - endpoint for browser-accessible presigned URLs
-	UsePathStyle   bool   `mapstructure:"use-path-style"`  // MinIO: true; AWS S3: false
-	AccessKeyID    string `mapstructure:"access-key-id"`   // MinIO/AWS access key
-	SecretKey      string `mapstructure:"secret-key"`      // MinIO/AWS secret key
+	Bucket         string `koanf:"bucket"`          // Target bucket (e.g., "products")
+	Region         string `koanf:"region"`          // e.g., "us-east-1"; MinIO accepts any non-empty value
+	Endpoint       string `koanf:"endpoint"`        // e.g., "http://minio:9000" or leave empty for AWS S3
+	PublicEndpoint string `koanf:"public-endpoint"` // e.g., "http://localhost:9000" - endpoint for browser-accessible presigned URLs
+	UsePathStyle   bool   `koanf:"use-path-style"`  // MinIO: true; AWS S3: false
+	AccessKeyID    string `koanf:"access-key-id"`   // MinIO/AWS access key
+	SecretKey      string `koanf:"secret-key"`      // MinIO/AWS secret key
 
 	// Client tuning
 	HTTPTimeout         time.Duration // default 30s if zero
@@ -24,9 +24,9 @@ type Config struct {
 	IdleConnTimeout     time.Duration // default 90s if zero
 }
 
-func newConfig(v *viper.Viper) (Config, error) {
+func newConfig(k *koanf.Koanf) (Config, error) {
 	var cfg Config
-	if err := v.Sub("s3").UnmarshalExact(&cfg); err != nil {
+	if err := k.Unmarshal("s3", &cfg); err != nil {
 		return cfg, fmt.Errorf("failed to load s3 config: %w", err)
 	}
 	if cfg.HTTPTimeout == 0 {
