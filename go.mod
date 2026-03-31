@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/Sokol111/ecommerce-catalog-service-api v1.1.4
-	github.com/Sokol111/ecommerce-commons v0.5.8
+	github.com/Sokol111/ecommerce-commons v0.5.9
 	github.com/Sokol111/ecommerce-image-service-api v1.1.4
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
