@@ -16,6 +16,7 @@ type presigner struct {
 	bucket         string
 	ttl            time.Duration
 	publicEndpoint string // if set, rewrite presigned URLs to use this endpoint
+	r2Compatible   bool   // if set, remove unsupported fields from POST policy
 }
 
 // newPresigner creates a new Presigner implementation.
@@ -27,6 +28,7 @@ func newPresigner(client *minio.Client, s3Cfg Config, appCfg application.Config)
 		bucket:         s3Cfg.Bucket,
 		ttl:            appCfg.PresignTTL,
 		publicEndpoint: s3Cfg.PublicEndpoint,
+		r2Compatible:   s3Cfg.R2Compatible,
 	}
 }
 
@@ -62,6 +64,12 @@ func (p *presigner) CreatePostPolicy(ctx context.Context, input *abstraction.Pos
 	presignedURL, formData, err := p.minioClient.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return nil, err
+	}
+
+	// Cloudflare R2 does not support "bucket" as a POST policy field
+	// and rejects it with InvalidArgument. The bucket is already part of the URL path.
+	if p.r2Compatible {
+		delete(formData, "bucket")
 	}
 
 	// Rewrite URL to use public endpoint if configured
