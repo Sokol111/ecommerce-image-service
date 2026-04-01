@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
@@ -37,7 +36,6 @@ func newPresigner(client *minio.Client, s3Cfg Config, appCfg application.Config)
 func (p *presigner) CreatePresignedUpload(ctx context.Context, input *abstraction.PresignedUploadInput) (*abstraction.PresignedUploadOutput, error) {
 	headers := http.Header{}
 	headers.Set("Content-Type", input.ContentType)
-	headers.Set("Content-Length", strconv.FormatInt(input.Size, 10))
 
 	presignedURL, err := p.minioClient.PresignHeader(ctx, "PUT", p.bucket, input.Key, p.ttl, nil, headers)
 	if err != nil {
