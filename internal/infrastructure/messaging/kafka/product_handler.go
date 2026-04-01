@@ -29,13 +29,12 @@ func (h *productHandler) Process(ctx context.Context, event any) error {
 }
 
 func (h *productHandler) handleProductUpdated(ctx context.Context, e *events.ProductUpdatedEvent) error {
-	var imageIDs *[]string
-	if e.Payload.ImageID != nil {
-		imageIDs = &[]string{*e.Payload.ImageID}
+	if e.Payload.ImageID == nil {
+		return fmt.Errorf("no image to promote for product %s: %w", e.Payload.ProductID, consumer.ErrSkipMessage)
 	}
 
 	cmd := command.PromoteImagesCommand{
-		ImageIDs:  imageIDs,
+		ImageIDs:  &[]string{*e.Payload.ImageID},
 		ProductID: e.Payload.ProductID,
 	}
 
