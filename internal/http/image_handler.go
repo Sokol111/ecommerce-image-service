@@ -93,7 +93,6 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *httpapi.PresignRe
 			UploadUrl:   *uploadURL,
 			UploadToken: result.UploadToken,
 			ExpiresIn:   result.ExpiresIn,
-			FormData:    result.FormData,
 		}, nil
 
 	case httpapi.OwnerTypeUser:

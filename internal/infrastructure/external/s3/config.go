@@ -16,7 +16,6 @@ type Config struct {
 	UsePathStyle   bool   `koanf:"use-path-style"`  // MinIO: true; AWS S3: false
 	AccessKeyID    string `koanf:"access-key-id"`   // MinIO/AWS access key
 	SecretKey      string `koanf:"secret-key"`      // MinIO/AWS secret key
-	R2Compatible   bool   `koanf:"r2-compatible"`   // Cloudflare R2: true; removes unsupported "bucket" field from POST policy
 
 	// Client tuning
 	HTTPTimeout         time.Duration // default 30s if zero

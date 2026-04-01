@@ -8,24 +8,24 @@ import (
 // Storage abstractions define contracts for external storage dependencies.
 // These interfaces are implemented in the infrastructure layer.
 
-// PostPolicyInput contains parameters for creating a POST policy
-type PostPolicyInput struct {
+// PresignedUploadInput contains parameters for creating a presigned upload URL
+type PresignedUploadInput struct {
 	Key         string
 	ContentType string
-	Size        int64 // Exact file size in bytes (enforced by S3/MinIO)
+	Size        int64 // Exact file size in bytes (enforced via signed headers)
 }
 
-// PostPolicyOutput contains the POST policy result for form-based upload
-type PostPolicyOutput struct {
-	URL        string            // URL to POST to
-	FormData   map[string]string // Form fields to include with the upload
+// PresignedUploadOutput contains the presigned upload URL
+type PresignedUploadOutput struct {
+	URL        string // Presigned PUT URL
 	TTLSeconds int
 }
 
 // Presigner creates presigned URLs for uploading objects
 type Presigner interface {
-	// CreatePostPolicy creates a POST policy that enforces size limits at S3/MinIO level
-	CreatePostPolicy(ctx context.Context, input *PostPolicyInput) (*PostPolicyOutput, error)
+	// CreatePresignedUpload creates a presigned PUT URL with Content-Type and Content-Length
+	// baked into the signature, so the storage rejects mismatched uploads.
+	CreatePresignedUpload(ctx context.Context, input *PresignedUploadInput) (*PresignedUploadOutput, error)
 }
 
 // HeadObjectInput contains parameters for checking object metadata

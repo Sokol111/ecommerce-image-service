@@ -22,12 +22,11 @@ type CreatePresignCommand struct {
 	Size        int64
 }
 
-// CreatePresignResult contains the POST policy response for uploading
+// CreatePresignResult contains the presigned URL response for uploading
 type CreatePresignResult struct {
 	UploadURL   string
 	UploadToken string
 	ExpiresIn   int
-	FormData    map[string]string // Form fields for POST upload (key, policy, signature, etc.)
 }
 
 // CreatePresignCommandHandler handles CreatePresignCommand
@@ -75,13 +74,13 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 	// Generate key
 	key := prefix + cmd.OwnerID + "/" + uuid.New().String() + ext
 
-	postPolicy, err := h.presigner.CreatePostPolicy(ctx, &abstraction.PostPolicyInput{
+	presignResult, err := h.presigner.CreatePresignedUpload(ctx, &abstraction.PresignedUploadInput{
 		Key:         key,
 		ContentType: cmd.ContentType,
 		Size:        cmd.Size,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create post policy: %w", err)
+		return nil, fmt.Errorf("create presigned upload: %w", err)
 	}
 
 	// Generate signed JWT token with upload metadata
@@ -97,16 +96,15 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 		return nil, fmt.Errorf("generate upload token: %w", err)
 	}
 
-	h.log(ctx).Debug("POST policy created with size validation",
+	h.log(ctx).Debug("Presigned PUT URL created with signed Content-Type and Content-Length",
 		zap.String("key", key),
 		zap.Int64("size", cmd.Size),
 	)
 
 	return &CreatePresignResult{
-		UploadURL:   postPolicy.URL,
+		UploadURL:   presignResult.URL,
 		UploadToken: uploadToken,
-		ExpiresIn:   postPolicy.TTLSeconds,
-		FormData:    postPolicy.FormData,
+		ExpiresIn:   presignResult.TTLSeconds,
 	}, nil
 }
 
