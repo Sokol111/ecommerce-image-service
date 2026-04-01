@@ -29,6 +29,7 @@ func Module() fx.Option {
 				return command.NewPromoteImagesHandler(repo, objStorage, signer, outbox, txManager, cfg.Promote.SmallWidth, cfg.Promote.LargeWidth, cfg.Promote.Quality)
 			},
 			command.NewDeleteImageHandler,
+			command.NewCleanupOwnerImagesHandler,
 		),
 		// Query handlers
 		fx.Provide(

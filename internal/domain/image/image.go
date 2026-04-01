@@ -103,14 +103,14 @@ func Reconstruct(id string, version int, alt, ownerType, ownerID, role, key, mim
 	}
 }
 
-// PromoteToProduct promotes the image from draft to product
-func (i *Image) PromoteToProduct(productID, newKey string) error {
+// Promote promotes the image from draft to the specified owner type
+func (i *Image) Promote(ownerType OwnerType, ownerID, newKey string) error {
 	if i.OwnerType != string(OwnerTypeDraft) {
 		return errors.New("only draft images can be promoted")
 	}
 
-	i.OwnerType = string(OwnerTypeProduct)
-	i.OwnerID = productID
+	i.OwnerType = string(ownerType)
+	i.OwnerID = ownerID
 	i.Key = newKey
 	i.Status = StatusReady
 	i.ModifiedAt = time.Now().UTC()

@@ -11,16 +11,27 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/apperrors"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
-	"github.com/Sokol111/ecommerce-image-service/internal/event"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
-// PromoteImagesCommand represents a request to promote draft images to product
+// PromotedImage holds info about a successfully promoted image for event callbacks.
+type PromotedImage struct {
+	ImageID       string
+	SmallImageURL string
+	LargeImageURL string
+}
+
+// OnPromotedFunc is called after successful promotion to create owner-specific outbox messages.
+type OnPromotedFunc func(ctx context.Context, ownerID string, images []PromotedImage) ([]outbox.Message, error)
+
+// PromoteImagesCommand represents a request to promote draft images to a target owner.
 type PromoteImagesCommand struct {
-	DraftID   string    // Optional: required only when ImageIDs is empty (promote all draft images)
-	ImageIDs  *[]string // Optional: if provided, only these images are promoted
-	ProductID string
+	DraftID    string    // Optional: required only when ImageIDs is empty (promote all draft images)
+	ImageIDs   *[]string // Optional: if provided, only these images are promoted
+	OwnerType  image.OwnerType
+	OwnerID    string
+	OnPromoted OnPromotedFunc // Optional: called after promotion to publish owner-specific events
 }
 
 // PromoteImagesCommandHandler handles PromoteImagesCommand
@@ -74,18 +85,18 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 	}
 
 	if len(images) == 0 {
-		h.log(ctx).Debug("no images to promote", zap.String("productID", cmd.ProductID))
+		h.log(ctx).Debug("no images to promote", zap.String("ownerID", cmd.OwnerID))
 		return []*image.Image{}, nil
 	}
 
 	// Phase 1: Copy files (without deleting originals)
-	copyResults, err := h.copyImages(ctx, images, cmd.ProductID)
+	copyResults, err := h.copyImages(ctx, images, cmd.OwnerType, cmd.OwnerID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Phase 2: DB Transaction
-	result, err := h.executePromotion(ctx, copyResults, cmd.ProductID)
+	result, err := h.executePromotion(ctx, copyResults, cmd)
 	if err != nil {
 		// Compensation: rollback copied files
 		h.rollbackCopiedFiles(ctx, copyResults)
@@ -94,9 +105,9 @@ func (h *promoteImagesHandler) Handle(ctx context.Context, cmd PromoteImagesComm
 
 	// Phase 3: Success - delete old files (best effort)
 	h.deleteSourceFiles(ctx, copyResults)
-	h.deleteOldProductImages(ctx, result.OldImageKeys)
+	h.deleteOldImages(ctx, result.OldImageKeys)
 
-	h.log(ctx).Debug("images promoted", zap.Int("count", len(result.Promoted)), zap.String("productID", cmd.ProductID))
+	h.log(ctx).Debug("images promoted", zap.Int("count", len(result.Promoted)), zap.String("ownerID", cmd.OwnerID))
 
 	h.sendOutboxMessages(ctx, result.Sends)
 
@@ -112,7 +123,7 @@ func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd Promo
 
 	// If specific IDs provided, fetch them directly and check their state
 	if len(imageIDs) > 0 {
-		return h.getSpecificImagesToPromote(ctx, imageIDs, cmd.ProductID)
+		return h.getSpecificImagesToPromote(ctx, imageIDs, cmd.OwnerID)
 	}
 
 	if cmd.DraftID == "" {
@@ -133,7 +144,7 @@ func (h *promoteImagesHandler) getImagesToPromote(ctx context.Context, cmd Promo
 }
 
 // getSpecificImagesToPromote fetches specific images and validates their state for idempotency
-func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, imageIDs []string, productID string) ([]*image.Image, error) {
+func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, imageIDs []string, ownerID string) ([]*image.Image, error) {
 	images, err := h.repo.FindByIDs(ctx, imageIDs)
 	if err != nil {
 		return nil, fmt.Errorf("find images by IDs: %w", err)
@@ -149,10 +160,10 @@ func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, i
 		case img.OwnerType == string(image.OwnerTypeDraft):
 			toPromote = append(toPromote, img)
 
-		case img.OwnerType == string(image.OwnerTypeProduct) && img.OwnerID == productID:
-			h.log(ctx).Debug("image already promoted to target product, skipping",
+		case img.OwnerType != string(image.OwnerTypeDraft) && img.OwnerID == ownerID:
+			h.log(ctx).Debug("image already promoted to target owner, skipping",
 				zap.String("imageID", img.ID),
-				zap.String("productID", productID),
+				zap.String("ownerID", ownerID),
 			)
 
 		default:
@@ -164,11 +175,11 @@ func (h *promoteImagesHandler) getSpecificImagesToPromote(ctx context.Context, i
 }
 
 // copyImages copies S3 objects without deleting originals (Phase 1)
-func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.Image, productID string) ([]copyResult, error) {
+func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.Image, ownerType image.OwnerType, ownerID string) ([]copyResult, error) {
 	var results []copyResult
 
 	for _, img := range images {
-		result, err := h.copyImage(ctx, img, productID)
+		result, err := h.copyImage(ctx, img, ownerType, ownerID)
 		if err != nil {
 			// Rollback already copied files on error
 			h.rollbackCopiedFiles(ctx, results)
@@ -181,14 +192,15 @@ func (h *promoteImagesHandler) copyImages(ctx context.Context, images []*image.I
 }
 
 // copyImage copies a single image to target location
-func (h *promoteImagesHandler) copyImage(ctx context.Context, img *image.Image, productID string) (copyResult, error) {
+func (h *promoteImagesHandler) copyImage(ctx context.Context, img *image.Image, ownerType image.OwnerType, ownerID string) (copyResult, error) {
 	srcPrefix := "drafts/" + img.OwnerID + "/"
 	if !strings.HasPrefix(img.Key, srcPrefix) {
 		return copyResult{}, fmt.Errorf("image %s has key outside draft prefix: %s", img.ID, img.Key)
 	}
 
+	targetPrefix := ownerTypePrefix(ownerType)
 	sourceKey := img.Key
-	targetKey := "products/" + productID + "/" + strings.TrimPrefix(img.Key, srcPrefix)
+	targetKey := targetPrefix + ownerID + "/" + strings.TrimPrefix(img.Key, srcPrefix)
 
 	// Check if target already exists (idempotency)
 	exists, _ := h.objStorage.ObjectExists(ctx, targetKey) //nolint:errcheck // error means object doesn't exist
@@ -265,26 +277,27 @@ func (h *promoteImagesHandler) deleteSourceFiles(ctx context.Context, results []
 }
 
 // executePromotion runs DB updates and outbox creation in a transaction
-func (h *promoteImagesHandler) executePromotion(ctx context.Context, copyResults []copyResult, productID string) (*promoteResult, error) {
+func (h *promoteImagesHandler) executePromotion(ctx context.Context, copyResults []copyResult, cmd PromoteImagesCommand) (*promoteResult, error) {
 	return mongo.WithTransaction(ctx, h.txManager, func(txCtx context.Context) (*promoteResult, error) {
-		return h.promoteInTransaction(txCtx, copyResults, productID)
+		return h.promoteInTransaction(txCtx, copyResults, cmd)
 	})
 }
 
 // promoteInTransaction performs the actual promotion logic within a transaction
-func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyResults []copyResult, productID string) (*promoteResult, error) {
-	// Soft-delete existing product images
-	oldImageKeys, err := h.softDeleteOldProductImages(ctx, productID)
+func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyResults []copyResult, cmd PromoteImagesCommand) (*promoteResult, error) {
+	// Soft-delete existing owner images
+	oldImageKeys, err := h.softDeleteOldImages(ctx, cmd.OwnerType, cmd.OwnerID)
 	if err != nil {
 		return nil, err
 	}
 
 	var promoted []*image.Image
+	var promotedInfos []PromotedImage
 	var sends []outbox.SendFunc
 
 	for _, cr := range copyResults {
 		// Update domain object
-		if err := cr.Image.PromoteToProduct(productID, cr.TargetKey); err != nil {
+		if err := cr.Image.Promote(cmd.OwnerType, cmd.OwnerID, cr.TargetKey); err != nil {
 			return nil, fmt.Errorf("promote image %s: %w", cr.Image.ID, err)
 		}
 
@@ -296,13 +309,26 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 
 		smallImageURL := h.buildImageURL(updated.Key, h.smallWidth)
 		largeImageURL := h.buildImageURL(updated.Key, h.largeWidth)
-		msg := event.NewProductImagePromotedOutboxMessage(ctx, productID, updated.ID, smallImageURL, largeImageURL)
+		promotedInfos = append(promotedInfos, PromotedImage{
+			ImageID:       updated.ID,
+			SmallImageURL: smallImageURL,
+			LargeImageURL: largeImageURL,
+		})
+	}
 
-		send, err := h.outbox.Create(ctx, msg)
+	// Create outbox messages via callback if provided
+	if cmd.OnPromoted != nil {
+		msgs, err := cmd.OnPromoted(ctx, cmd.OwnerID, promotedInfos)
 		if err != nil {
-			return nil, fmt.Errorf("create outbox: %w", err)
+			return nil, fmt.Errorf("build promotion events: %w", err)
 		}
-		sends = append(sends, send)
+		for _, msg := range msgs {
+			send, err := h.outbox.Create(ctx, msg)
+			if err != nil {
+				return nil, fmt.Errorf("create outbox: %w", err)
+			}
+			sends = append(sends, send)
+		}
 	}
 
 	return &promoteResult{
@@ -319,11 +345,11 @@ func (h *promoteImagesHandler) sendOutboxMessages(ctx context.Context, sends []o
 	}
 }
 
-// softDeleteOldProductImages marks existing product images as deleted within the transaction
-func (h *promoteImagesHandler) softDeleteOldProductImages(ctx context.Context, productID string) ([]string, error) {
-	existing, err := h.repo.FindByOwner(ctx, string(image.OwnerTypeProduct), productID, nil)
+// softDeleteOldImages marks existing owner images as deleted within the transaction
+func (h *promoteImagesHandler) softDeleteOldImages(ctx context.Context, ownerType image.OwnerType, ownerID string) ([]string, error) {
+	existing, err := h.repo.FindByOwner(ctx, string(ownerType), ownerID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("find existing product images: %w", err)
+		return nil, fmt.Errorf("find existing owner images: %w", err)
 	}
 
 	if len(existing) == 0 {
@@ -339,22 +365,22 @@ func (h *promoteImagesHandler) softDeleteOldProductImages(ctx context.Context, p
 		keys = append(keys, img.Key)
 	}
 
-	h.log(ctx).Debug("soft-deleted old product images",
+	h.log(ctx).Debug("soft-deleted old owner images",
 		zap.Int("count", len(existing)),
-		zap.String("productID", productID),
+		zap.String("ownerID", ownerID),
 	)
 
 	return keys, nil
 }
 
-// deleteOldProductImages deletes S3 objects of replaced product images (best effort)
-func (h *promoteImagesHandler) deleteOldProductImages(ctx context.Context, keys []string) {
+// deleteOldImages deletes S3 objects of replaced owner images (best effort)
+func (h *promoteImagesHandler) deleteOldImages(ctx context.Context, keys []string) {
 	if len(keys) == 0 {
 		return
 	}
 
 	if err := h.objStorage.DeleteObjects(ctx, keys); err != nil {
-		h.log(ctx).Warn("failed to delete old product image files",
+		h.log(ctx).Warn("failed to delete old image files",
 			zap.Strings("keys", keys),
 			zap.Error(err),
 		)
@@ -368,4 +394,15 @@ func (h *promoteImagesHandler) buildImageURL(key string, width int) string {
 
 func (h *promoteImagesHandler) log(ctx context.Context) *zap.Logger {
 	return logger.Get(ctx).With(zap.String("component", "promote-images-handler"))
+}
+
+func ownerTypePrefix(ownerType image.OwnerType) string {
+	switch ownerType {
+	case image.OwnerTypeProduct:
+		return "products/"
+	case image.OwnerTypeUser:
+		return "users/"
+	default:
+		return string(ownerType) + "s/"
+	}
 }

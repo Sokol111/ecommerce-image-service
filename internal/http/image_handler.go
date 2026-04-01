@@ -6,12 +6,14 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
 	"github.com/Sokol111/ecommerce-commons/pkg/observability/tracing"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/apperrors"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
 	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
+	imageevent "github.com/Sokol111/ecommerce-image-service/internal/event"
 	"github.com/samber/lo"
 )
 
@@ -169,7 +171,15 @@ func (h *imageHandler) PromoteImages(ctx context.Context, req *httpapi.PromoteRe
 	cmd := command.PromoteImagesCommand{
 		DraftID:   draftID,
 		ImageIDs:  imageIDs,
-		ProductID: req.ProductId,
+		OwnerType: image.OwnerTypeProduct,
+		OwnerID:   req.ProductId,
+		OnPromoted: func(ctx context.Context, ownerID string, images []command.PromotedImage) ([]outbox.Message, error) {
+			msgs := make([]outbox.Message, 0, len(images))
+			for _, img := range images {
+				msgs = append(msgs, imageevent.NewProductImagePromotedOutboxMessage(ctx, ownerID, img.ImageID, img.SmallImageURL, img.LargeImageURL))
+			}
+			return msgs, nil
+		},
 	}
 
 	images, err := h.promoteImagesHandler.Handle(ctx, cmd)

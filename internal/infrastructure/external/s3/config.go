@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	// Core
-	Bucket         string `koanf:"bucket"`          // Target bucket (e.g., "products")
+	Bucket         string `koanf:"bucket"`          // Target bucket (e.g., "images")
 	Region         string `koanf:"region"`          // e.g., "us-east-1"; MinIO accepts any non-empty value
 	Endpoint       string `koanf:"endpoint"`        // e.g., "http://minio:9000" or leave empty for AWS S3
 	PublicEndpoint string `koanf:"public-endpoint"` // e.g., "http://localhost:9000" - endpoint for browser-accessible presigned URLs

@@ -51,7 +51,7 @@ s3:
   endpoint: "http://minio:9000"
   public-endpoint: "http://localhost:9000"
   region: "us-east-1"
-  bucket: "products"
+  bucket: "images"
   access-key-id: "minioadmin"
   secret-key: "minioadmin123"
   use-path-style: true
