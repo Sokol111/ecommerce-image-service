@@ -6,8 +6,8 @@ github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c h1:udKWzYgxTojEK
 github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
-github.com/Sokol111/ecommerce-catalog-service-api v1.1.4 h1:dpWy3SBg7X2X2wIcY472AL8TPX/w3NZoZW+oNaBArIw=
-github.com/Sokol111/ecommerce-catalog-service-api v1.1.4/go.mod h1:frWc5XuwYbQ7iuvm5dN03z1LiC3BHZCPBglnVtimoSw=
+github.com/Sokol111/ecommerce-catalog-service-api v1.1.5 h1:eomdGBfSOaFtkiG47JymJ8LK8d3QuuLUN63+PfdWGXA=
+github.com/Sokol111/ecommerce-catalog-service-api v1.1.5/go.mod h1:frWc5XuwYbQ7iuvm5dN03z1LiC3BHZCPBglnVtimoSw=
 github.com/Sokol111/ecommerce-commons v0.5.9 h1:cfUxJ8VrQQk1EuX5zbeldlPQ+TVxLoUPl/LfhOvPyik=
 github.com/Sokol111/ecommerce-commons v0.5.9/go.mod h1:0f9WhUwn+HGECO50BHVwarunfM49kfCO4tm56zkf6eM=
 github.com/Sokol111/ecommerce-image-service-api v1.1.5 h1:j35E/MiCs5oxXn529BzHXvhqEIXczelf9fG1EO92+nI=

@@ -28,6 +28,8 @@ func (h *productHandler) Process(ctx context.Context, event any) error {
 	switch evt := event.(type) {
 	case *events.ProductUpdatedEvent:
 		return h.handleProductUpdated(ctx, evt)
+	case *events.ProductDeletedEvent:
+		return h.handleProductDeleted(ctx, evt)
 	default:
 		return fmt.Errorf("unhandled event type: %T: %w", event, consumer.ErrSkipMessage)
 	}
@@ -56,4 +58,11 @@ func (h *productHandler) handleProductUpdated(ctx context.Context, e *events.Pro
 
 	_, err := h.promoteImagesHandler.Handle(ctx, cmd)
 	return err
+}
+
+func (h *productHandler) handleProductDeleted(ctx context.Context, e *events.ProductDeletedEvent) error {
+	return h.cleanupImagesHandler.Handle(ctx, command.CleanupOwnerImagesCommand{
+		OwnerType: image.OwnerTypeProduct,
+		OwnerID:   e.Payload.ProductID,
+	})
 }
