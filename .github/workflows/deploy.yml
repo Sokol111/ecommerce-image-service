@@ -1,0 +1,20 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (e.g. 0.1.8)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    uses: Sokol111/ecommerce-infrastructure/.github/workflows/deploy.yml@master
+    with:
+      image_tag: ${{ inputs.image_tag }}
+    secrets:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}

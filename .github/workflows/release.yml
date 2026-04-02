@@ -21,3 +21,11 @@ jobs:
   release:
     needs: ci
     uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-release.yml@master
+
+  deploy:
+    needs: release
+    uses: Sokol111/ecommerce-infrastructure/.github/workflows/deploy.yml@master
+    with:
+      image_tag: ${{ needs.release.outputs.image_tag }}
+    secrets:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
