@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Image tag to deploy (e.g. 0.1.8)"
-        required: true
+        description: "Image tag to deploy (empty = latest release)"
+        required: false
         type: string
 
 permissions:
