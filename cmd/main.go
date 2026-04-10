@@ -10,6 +10,7 @@ import (
 	commons_persistence "github.com/Sokol111/ecommerce-commons/pkg/persistence"
 	commons_pprof "github.com/Sokol111/ecommerce-commons/pkg/pprof"
 	commons_swaggerui "github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
+	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/http"
@@ -31,6 +32,9 @@ var AppModules = fx.Options(
 	commons_messaging.NewMessagingModule(),
 	commons_pprof.NewPprofModule(),
 	commons_swaggerui.NewSwaggerModule(commons_swaggerui.SwaggerConfig{OpenAPIContent: httpapi.OpenAPIDoc}),
+
+	// Tenant
+	tenant.MiddlewareModule(),
 
 	// Infrastructure - External Services
 	s3.NewS3Module(),
