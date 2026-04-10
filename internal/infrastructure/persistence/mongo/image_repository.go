@@ -12,10 +12,9 @@ type imageRepository struct {
 	*commonsmongo.GenericRepository[image.Image, imageEntity]
 }
 
-func newImageRepository(mongo commonsmongo.Mongo, mapper *imageMapper) (image.Repository, error) {
-	coll := mongo.GetCollection("image")
-	genericRepo, err := commonsmongo.NewGenericRepository(
-		coll,
+func newImageRepository(admin commonsmongo.Admin, mapper *imageMapper) (image.Repository, error) {
+	genericRepo, err := commonsmongo.NewTenantRepository(
+		admin, "image",
 		mapper,
 	)
 	if err != nil {

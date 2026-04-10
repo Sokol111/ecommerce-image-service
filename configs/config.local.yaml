@@ -26,6 +26,7 @@ kafka:
 security:
   token:
     public-key: "eb6ebefd6a2b0a304d43c2ccca329aef0a1439d429dbe8ca9b6190622ce38341"
+    service-token: "v4.public.eyJleHAiOiIyMDM2LTA0LTA3VDE1OjQwOjA1KzAyOjAwIiwiaWF0IjoiMjAyNi0wNC0xMFQxNTo0MDowNSswMjowMCIsIm5iZiI6IjIwMjYtMDQtMTBUMTU6NDA6MDUrMDI6MDAiLCJwZXJtaXNzaW9ucyI6WyJwcm9kdWN0czpyZWFkIiwidGVuYW50czpyZWFkIl0sInJvbGUiOiJzZXJ2aWNlX2FjY291bnQiLCJzZXJ2aWNlX25hbWUiOiJpbWFnZS1zZXJ2aWNlIiwic3ViIjoic2VydmljZTppbWFnZS1zZXJ2aWNlIiwidHlwZSI6ImFjY2VzcyJ9Ug-q4kR67xqFEoSrhYE4pjduPEM1h9TkTFNPezFxXnIy1YmahSOHrMxGXEI2ksKwGuqrwTiWXMnX0OJxHhl-BQ"
 
 observability:
   otel-collector-endpoint: "otel-collector-opentelemetry-collector.observability.svc:4317"
@@ -60,3 +61,7 @@ imgproxy:
   public-base-url: "http://localhost:8083"
   key-hex: "0000000000000000000000000000000000000000000000000000000000000000"
   salt-hex: "1111111111111111111111111111111111111111111111111111111111111111"
+
+clients:
+  tenant-service:
+    base-url: "http://ecommerce-tenant-service:8080"
