@@ -37,6 +37,7 @@ var AppModules = fx.Options(
 	// Tenant
 	tenant.MiddlewareModule(),
 	tenantapi.NewTenantSlugsModule("clients.tenant-service"),
+	tenantapi.TenantEventsModule("tenant-events"),
 
 	// Infrastructure - External Services
 	s3.NewS3Module(),
