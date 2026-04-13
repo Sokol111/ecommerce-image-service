@@ -12,7 +12,8 @@
             "program": "${workspaceFolder}/cmd",
             "cwd": "${workspaceFolder}",
             "env": {
-                "PATH": "/usr/local/go/bin:/home/ihsokolo/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+                "PATH": "/usr/local/go/bin:/home/ihsokolo/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "CONFIG_FILE": "${workspaceFolder}/configs/config.standalone.yaml"
             },
             "args": []
         },
