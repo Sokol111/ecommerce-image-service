@@ -25,7 +25,7 @@ kafka:
 
 security:
   token:
-    public-key: "eb6ebefd6a2b0a304d43c2ccca329aef0a1439d429dbe8ca9b6190622ce38341"
+    jwks-url: "http://localhost:8080/oauth/v2/keys"
 
 observability:
   otel-collector-endpoint: ""
