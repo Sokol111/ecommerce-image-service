@@ -32,9 +32,11 @@ kafka:
 security:
   token:
     jwks-url: "http://zitadel-api:8080/oauth/v2/keys"
+    host-override: "localhost"
   s2s:
     client-id: "ecommerce-service"
     token-url: "http://zitadel-api:8080/oauth/v2/token"
+    host-override: "localhost"
 
 observability:
   otel-collector-endpoint: "otel-collector-opentelemetry-collector.observability.svc:4317"
