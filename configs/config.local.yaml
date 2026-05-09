@@ -30,13 +30,16 @@ kafka:
         enable-dlq: true
 
 security:
-  token:
-    jwks-url: "http://zitadel-api:8080/oauth/v2/keys"
-    host-override: "localhost"
-  s2s:
+  jwks:
+    jwks-url: "http://logto:3001/oidc/jwks"
+    audience: "https://api.sokolshop.com"
+  client-credentials:
     client-id: "ecommerce-service"
-    token-url: "http://zitadel-api:8080/oauth/v2/token"
-    host-override: "localhost"
+    token-url: "http://logto:3001/oidc/token"
+    resource: "https://api.sokolshop.com"
+    scopes:
+      - "openid"
+      - "tenants:read"
 
 observability:
   otel-collector-endpoint: "otel-collector-opentelemetry-collector.observability.svc:4317"
