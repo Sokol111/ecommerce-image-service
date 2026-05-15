@@ -9,7 +9,8 @@ import (
 	commons_observability "github.com/Sokol111/ecommerce-commons/pkg/observability"
 	commons_persistence "github.com/Sokol111/ecommerce-commons/pkg/persistence"
 	commons_pprof "github.com/Sokol111/ecommerce-commons/pkg/pprof"
-	commons_security "github.com/Sokol111/ecommerce-commons/pkg/security"
+	commons_token "github.com/Sokol111/ecommerce-commons/pkg/security/token"
+	commons_validation "github.com/Sokol111/ecommerce-commons/pkg/security/validation"
 	commons_swaggerui "github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
 	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
@@ -32,7 +33,8 @@ var AppModules = fx.Options(
 	commons_http.NewHTTPModule(),
 	commons_observability.NewObservabilityModule(),
 	commons_messaging.NewMessagingModule(),
-	commons_security.NewSecurityModule(),
+	commons_validation.NewModule(),
+	commons_token.NewModule(),
 	commons_pprof.NewPprofModule(),
 	commons_swaggerui.NewSwaggerModule(commons_swaggerui.SwaggerConfig{OpenAPIContent: httpapi.OpenAPIDoc}),
 
