@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -14,21 +13,16 @@ import (
 )
 
 type presigner struct {
-	minioClient    *minio.Client
-	bucket         string
-	ttl            time.Duration
-	publicEndpoint string // if set, rewrite presigned URLs to use this endpoint
+	client *minio.Client
+	bucket string
+	ttl    time.Duration
 }
 
-// newPresigner creates a new Presigner implementation.
-// If public-endpoint is configured, presigned URLs are rewritten to use it
-// so browsers can reach S3/MinIO directly.
 func newPresigner(client *minio.Client, s3Cfg Config, appCfg application.Config) abstraction.Presigner {
 	return &presigner{
-		minioClient:    client,
-		bucket:         s3Cfg.Bucket,
-		ttl:            appCfg.PresignTTL,
-		publicEndpoint: s3Cfg.PublicEndpoint,
+		client: client,
+		bucket: s3Cfg.Bucket,
+		ttl:    appCfg.PresignTTL,
 	}
 }
 
@@ -39,19 +33,9 @@ func (p *presigner) CreatePresignedUpload(ctx context.Context, input *abstractio
 	headers.Set("Content-Type", input.ContentType)
 	headers.Set("Content-Length", strconv.FormatInt(input.Size, 10))
 
-	presignedURL, err := p.minioClient.PresignHeader(ctx, "PUT", p.bucket, input.Key, p.ttl, nil, headers)
+	presignedURL, err := p.client.PresignHeader(ctx, "PUT", p.bucket, input.Key, p.ttl, nil, headers)
 	if err != nil {
 		return nil, fmt.Errorf("presign PUT: %w", err)
-	}
-
-	// Rewrite URL to use public endpoint if configured
-	if p.publicEndpoint != "" {
-		pub, err := url.Parse(p.publicEndpoint)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse public endpoint %q: %w", p.publicEndpoint, err)
-		}
-		presignedURL.Scheme = pub.Scheme
-		presignedURL.Host = pub.Host
 	}
 
 	return &abstraction.PresignedUploadOutput{

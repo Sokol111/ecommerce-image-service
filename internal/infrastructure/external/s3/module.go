@@ -11,24 +11,38 @@ import (
 )
 
 func NewS3Module() fx.Option {
-	return fx.Provide(
-		newConfig,
-		newMinioClient,   // *minio.Client — uses internal endpoint (e.g. http://minio:9000)
-		newPresigner,     // abstraction.Presigner
-		newObjectStorage, // abstraction.ObjectStorage
+	return fx.Options(
+		fx.Provide(newConfig),
+		newStorageModule(),
+		newPresignerModule(),
 	)
 }
 
-// newMinioClient creates a MinIO client using the internal endpoint for all S3 operations.
-func newMinioClient(cfg Config) (*minio.Client, error) {
+// newStorageModule provides ObjectStorage with an internal MinIO client.
+func newStorageModule() fx.Option {
+	return fx.Module("s3-storage",
+		fx.Provide(fx.Private, newInternalClient),
+		fx.Provide(newObjectStorage),
+	)
+}
+
+// newPresignerModule provides Presigner with a public-endpoint MinIO client
+// so that presigned URL signatures match the Host header browsers send.
+func newPresignerModule() fx.Option {
+	return fx.Module("s3-presigner",
+		fx.Provide(fx.Private, newPublicClient),
+		fx.Provide(newPresigner),
+	)
+}
+
+// newInternalClient creates a MinIO client using the internal endpoint for server-to-server S3 operations.
+func newInternalClient(cfg Config) (*minio.Client, error) {
 	if cfg.AccessKeyID == "" || cfg.SecretKey == "" {
 		return nil, fmt.Errorf("missing required S3 credentials: access-key-id and secret-key must both be set")
 	}
 
-	// Parse endpoint to extract host and scheme
 	host, secure := parseEndpoint(cfg.Endpoint)
 
-	// Create custom HTTP transport with connection pooling
 	transport := &http.Transport{
 		MaxIdleConns:        cfg.MaxIdleConns,
 		MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
@@ -40,6 +54,23 @@ func newMinioClient(cfg Config) (*minio.Client, error) {
 		Secure:    secure,
 		Region:    cfg.Region,
 		Transport: transport,
+	})
+}
+
+// newPublicClient creates a MinIO client using the public endpoint so that
+// presigned URL signatures include the correct Host for browser requests.
+func newPublicClient(cfg Config) (*minio.Client, error) {
+	endpoint := cfg.PublicEndpoint
+	if endpoint == "" {
+		endpoint = cfg.Endpoint
+	}
+
+	host, secure := parseEndpoint(endpoint)
+
+	return minio.New(host, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretKey, ""),
+		Secure: secure,
+		Region: cfg.Region,
 	})
 }
 
