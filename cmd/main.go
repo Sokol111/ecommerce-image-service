@@ -36,7 +36,7 @@ var AppModules = fx.Options(
 	commons_validation.NewModule(),
 	commons_token.NewModule(),
 	commons_pprof.NewPprofModule(),
-	commons_swaggerui.NewSwaggerModule(commons_swaggerui.SwaggerConfig{OpenAPIContent: httpapi.OpenAPIDoc}),
+	commons_swaggerui.NewSwaggerModule(),
 
 	// Tenant
 	tenant.MiddlewareModule(),
@@ -58,6 +58,7 @@ var AppModules = fx.Options(
 	application.Module(),
 
 	// HTTP
+	httpapi.ServerModule(),
 	http.NewHTTPHandlerModule(),
 )
 
