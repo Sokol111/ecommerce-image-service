@@ -17,8 +17,9 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/http"
-	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/kafka"
+	inbound_kafka "github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/imgproxy"
+	outbound_kafka "github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/mongo"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/s3"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/security"
@@ -56,7 +57,8 @@ var AppModules = fx.Options(
 	mongo.Module(),
 
 	// Infrastructure - Messaging
-	kafka.Module(),
+	inbound_kafka.Module(),
+	outbound_kafka.Module(),
 
 	// Application Layer
 	application.Module(),
