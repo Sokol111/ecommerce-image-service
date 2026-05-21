@@ -54,10 +54,9 @@ pprof:
 
 application:
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
-  promote:
-    small-width: 400
-    large-width: 800
-    quality: 85
+  small-width: 400
+  large-width: 800
+  quality: 85
 
 upload-token:
   jwt-secret: "dev-secret-key-change-in-production-min-32-chars-long!"

@@ -15,6 +15,7 @@ import (
 	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/http"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/imgproxy"
@@ -42,6 +43,9 @@ var AppModules = fx.Options(
 	tenant.MiddlewareModule(),
 	tenantapi.NewTenantSlugsModule("clients.tenant-service"),
 	tenantapi.TenantEventsModule("tenant-events"),
+
+	// Infrastructure - Config
+	infrastructure.ConfigModule(),
 
 	// Infrastructure - External Services
 	s3.NewS3Module(),

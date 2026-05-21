@@ -40,10 +40,9 @@ observability:
 
 application:
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
-  promote:
-    small-width: 400
-    large-width: 800
-    quality: 85
+  small-width: 400
+  large-width: 800
+  quality: 85
 
 s3:
   endpoint: "http://localhost:9000"
