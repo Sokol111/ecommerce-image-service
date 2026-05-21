@@ -1,14 +1,18 @@
 package application
 
 import (
+	"time"
+
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
 	"github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
-	"github.com/Sokol111/ecommerce-image-service/internal/application/abstraction"
-	"github.com/Sokol111/ecommerce-image-service/internal/application/command"
-	"github.com/Sokol111/ecommerce-image-service/internal/application/query"
-	"github.com/Sokol111/ecommerce-image-service/internal/domain/image"
+	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 	"go.uber.org/fx"
 )
+
+// PresignTTLProvider provides the presign TTL for upload token generation
+type PresignTTLProvider interface {
+	GetPresignTTL() time.Duration
+}
 
 // Module provides application layer dependencies
 func Module() fx.Option {
@@ -19,22 +23,22 @@ func Module() fx.Option {
 		),
 		// Command handlers
 		fx.Provide(
-			func(presigner abstraction.Presigner, tokenService abstraction.TokenService, cfg Config) command.CreatePresignCommandHandler {
-				return command.NewCreatePresignHandler(presigner, tokenService, cfg.PresignTTL, cfg.MaxUploadBytes)
+			func(presigner image.Presigner, tokenService image.TokenService, ttlProvider PresignTTLProvider, cfg Config) image.CreatePresignCommandHandler {
+				return image.NewCreatePresignHandler(presigner, tokenService, ttlProvider.GetPresignTTL(), cfg.MaxUploadBytes)
 			},
-			func(repo image.Repository, storage abstraction.ObjectStorage, tokenService abstraction.TokenService, cfg Config) command.ConfirmUploadCommandHandler {
-				return command.NewConfirmUploadHandler(repo, storage, tokenService, cfg.MaxUploadBytes)
+			func(repo image.Repository, storage image.ObjectStorage, tokenService image.TokenService, cfg Config) image.ConfirmUploadCommandHandler {
+				return image.NewConfirmUploadHandler(repo, storage, tokenService, cfg.MaxUploadBytes)
 			},
-			func(repo image.Repository, objStorage abstraction.ObjectStorage, signer abstraction.ImgproxySigner, outbox outbox.Outbox, txManager mongo.TxManager, cfg Config) command.PromoteImagesCommandHandler {
-				return command.NewPromoteImagesHandler(repo, objStorage, signer, outbox, txManager, cfg.Promote.SmallWidth, cfg.Promote.LargeWidth, cfg.Promote.Quality)
+			func(repo image.Repository, objStorage image.ObjectStorage, signer image.ImgproxySigner, outbox outbox.Outbox, txManager mongo.TxManager, eventFactory image.ImageEventFactory, cfg Config) image.PromoteImagesCommandHandler {
+				return image.NewPromoteImagesHandler(repo, objStorage, signer, outbox, txManager, eventFactory, cfg.Promote.SmallWidth, cfg.Promote.LargeWidth, cfg.Promote.Quality)
 			},
-			command.NewDeleteImageHandler,
-			command.NewCleanupOwnerImagesHandler,
+			image.NewDeleteImageHandler,
+			image.NewCleanupOwnerImagesHandler,
 		),
 		// Query handlers
 		fx.Provide(
-			query.NewGetImageByIDHandler,
-			query.NewGetDeliveryURLHandler,
+			image.NewGetImageByIDHandler,
+			image.NewGetDeliveryURLHandler,
 		),
 	)
 }

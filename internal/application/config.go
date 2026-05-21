@@ -2,21 +2,14 @@ package application
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/knadh/koanf/v2"
 )
 
 // Config holds application-level configuration
 type Config struct {
-	// PresignTTL is the time-to-live for presigned upload URLs
-	PresignTTL time.Duration `koanf:"presign-ttl"`
-
 	// MaxUploadBytes is the maximum allowed file upload size in bytes
 	MaxUploadBytes int64 `koanf:"max-upload-bytes"`
-
-	// JWTSecret is the secret key used to sign upload tokens
-	JWTSecret string `koanf:"jwt-secret"`
 
 	// Promote holds configuration for image promotion
 	Promote PromoteConfig `koanf:"promote"`
@@ -40,14 +33,8 @@ func NewConfig(k *koanf.Koanf) (Config, error) {
 	}
 
 	// Set defaults
-	if cfg.PresignTTL == 0 {
-		cfg.PresignTTL = 15 * time.Minute
-	}
 	if cfg.MaxUploadBytes == 0 {
 		cfg.MaxUploadBytes = 5 * 1024 * 1024 // 5 MB default
-	}
-	if cfg.JWTSecret == "" {
-		return cfg, fmt.Errorf("jwt-secret is required")
 	}
 
 	// Promote defaults

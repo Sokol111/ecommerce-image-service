@@ -53,13 +53,14 @@ pprof:
   port: 6060
 
 application:
-  presign-ttl: 15m # Presigned URL validity duration
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
-  jwt-secret: "dev-secret-key-change-in-production-min-32-chars-long!"
   promote:
     small-width: 400
     large-width: 800
     quality: 85
+
+upload-token:
+  jwt-secret: "dev-secret-key-change-in-production-min-32-chars-long!"
 
 s3:
   endpoint: "http://minio:9000"
@@ -69,9 +70,11 @@ s3:
   access-key-id: "minioadmin"
   secret-key: "minioadmin123"
   use-path-style: true
+  presign-ttl: 15m
 
 imgproxy:
   public-base-url: "http://localhost:8083"
+  bucket: "images"
   key-hex: "0000000000000000000000000000000000000000000000000000000000000000"
   salt-hex: "1111111111111111111111111111111111111111111111111111111111111111"
 
