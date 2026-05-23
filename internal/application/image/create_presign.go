@@ -10,6 +10,26 @@ import (
 	"go.uber.org/zap"
 )
 
+// PresignedUploadInput contains parameters for creating a presigned upload URL
+type PresignedUploadInput struct {
+	Key         string
+	ContentType string
+	Size        int64 // Exact file size in bytes (enforced via signed headers)
+}
+
+// PresignedUploadOutput contains the presigned upload URL
+type PresignedUploadOutput struct {
+	URL        string // Presigned PUT URL
+	TTLSeconds int
+}
+
+// Presigner creates presigned URLs for uploading objects
+type Presigner interface {
+	// CreatePresignedUpload creates a presigned PUT URL with Content-Type and Content-Length
+	// baked into the signature, so the storage rejects mismatched uploads.
+	CreatePresignedUpload(ctx context.Context, input *PresignedUploadInput) (*PresignedUploadOutput, error)
+}
+
 // CreatePresignCommand represents a request to create a presigned URL
 type CreatePresignCommand struct {
 	ContentType string
