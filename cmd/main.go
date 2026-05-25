@@ -5,6 +5,7 @@ import (
 
 	commons_core "github.com/Sokol111/ecommerce-commons/pkg/core"
 	commons_http "github.com/Sokol111/ecommerce-commons/pkg/http"
+	httpclient "github.com/Sokol111/ecommerce-commons/pkg/http/client"
 	commons_messaging "github.com/Sokol111/ecommerce-commons/pkg/messaging"
 	commons_observability "github.com/Sokol111/ecommerce-commons/pkg/observability"
 	commons_persistence "github.com/Sokol111/ecommerce-commons/pkg/persistence"
@@ -39,11 +40,12 @@ var AppModules = fx.Options(
 	commons_token.NewModule(),
 	commons_pyroscope.NewPyroscopeModule(),
 	commons_swaggerui.NewSwaggerModule(),
+	httpclient.RegistryModule(),
 
 	// Tenant
 	tenant.MiddlewareModule(),
-	tenantapi.NewTenantSlugsModule("clients.tenant-service"),
-	tenantapi.TenantEventsModule("tenant-events"),
+	tenantapi.NewTenantSlugsModule(),
+	tenantapi.TenantEventsModule(),
 
 	// Infrastructure - Config
 	infrastructure.ConfigModule(),
