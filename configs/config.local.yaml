@@ -48,9 +48,9 @@ observability:
   metrics:
     enabled: false
 
-pprof:
+pyroscope:
   enabled: true
-  port: 6060
+  endpoint: "http://pyroscope:4040"
 
 application:
   max-upload-bytes: 5242880 # 5 MB - maximum upload size
