@@ -9,7 +9,6 @@ import (
 	commons_messaging "github.com/Sokol111/ecommerce-commons/pkg/messaging"
 	commons_observability "github.com/Sokol111/ecommerce-commons/pkg/observability"
 	commons_persistence "github.com/Sokol111/ecommerce-commons/pkg/persistence"
-	commons_pyroscope "github.com/Sokol111/ecommerce-commons/pkg/pyroscope"
 	commons_token "github.com/Sokol111/ecommerce-commons/pkg/security/token"
 	commons_validation "github.com/Sokol111/ecommerce-commons/pkg/security/validation"
 	commons_swaggerui "github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
@@ -38,7 +37,6 @@ var AppModules = fx.Options(
 	commons_messaging.NewMessagingModule(),
 	commons_validation.NewModule(),
 	commons_token.NewModule(),
-	commons_pyroscope.NewPyroscopeModule(),
 	commons_swaggerui.NewSwaggerModule(),
 	httpclient.RegistryModule(),
 
