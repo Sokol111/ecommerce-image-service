@@ -3,10 +3,10 @@ module github.com/Sokol111/ecommerce-image-service
 go 1.26.3
 
 require (
-	github.com/Sokol111/ecommerce-catalog-service-api v1.2.1
-	github.com/Sokol111/ecommerce-commons v0.7.9
-	github.com/Sokol111/ecommerce-image-service-api v1.2.1
-	github.com/Sokol111/ecommerce-tenant-service-api v0.1.3
+	github.com/Sokol111/ecommerce-catalog-service-api v1.2.2
+	github.com/Sokol111/ecommerce-commons v0.8.1
+	github.com/Sokol111/ecommerce-image-service-api v1.2.2
+	github.com/Sokol111/ecommerce-tenant-service-api v0.1.4
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/v2 v2.3.4
@@ -37,6 +37,8 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.19.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
+	github.com/grafana/pyroscope-go v1.3.0 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.10 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/hamba/avro/v2 v2.31.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
