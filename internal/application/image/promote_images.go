@@ -292,11 +292,13 @@ func (h *promoteImagesHandler) promoteInTransaction(ctx context.Context, copyRes
 
 	for _, cr := range copyResults {
 		// Update domain object
-		if err := cr.Image.Promote(cmd.OwnerType, cmd.OwnerID, cr.TargetKey); err != nil {
+		err = cr.Image.Promote(cmd.OwnerType, cmd.OwnerID, cr.TargetKey)
+		if err != nil {
 			return nil, fmt.Errorf("promote image %s: %w", cr.Image.ID, err)
 		}
 
-		updated, err := h.repo.Update(ctx, cr.Image)
+		var updated *Image
+		updated, err = h.repo.Update(ctx, cr.Image)
 		if err != nil {
 			return nil, fmt.Errorf("update image after promote: %w", err)
 		}
