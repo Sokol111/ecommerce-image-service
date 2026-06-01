@@ -8,6 +8,7 @@ import (
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
 	"github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
+	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -193,7 +194,8 @@ func (h *promoteImagesHandler) copyImage(ctx context.Context, img *Image, ownerT
 		return copyResult{}, fmt.Errorf("image %s has key outside draft prefix: %s", img.ID, img.Key)
 	}
 
-	targetPrefix := ownerTypePrefix(ownerType)
+	tenantSlug := tenant.MustSlugFromContext(ctx)
+	targetPrefix := tenantSlug + "/" + ownerTypePrefix(ownerType)
 	sourceKey := img.Key
 	targetKey := targetPrefix + ownerID + "/" + strings.TrimPrefix(img.Key, srcPrefix)
 

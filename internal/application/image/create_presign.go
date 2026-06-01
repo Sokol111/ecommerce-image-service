@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
+	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -83,14 +84,21 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 		return nil, fmt.Errorf("%w: max %d bytes", ErrImageTooLarge, h.maxUploadBytes)
 	}
 
-	// Get prefix by owner type
-	prefix, err := getPrefixByOwnerType(cmd.OwnerType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get prefix by owner type: %w", err)
+	// Generate key based on owner type
+	var key string
+	switch OwnerType(cmd.OwnerType) {
+	case OwnerTypeDraft:
+		key = "drafts/" + cmd.OwnerID + "/" + uuid.New().String() + ext
+	case OwnerTypeProduct, OwnerTypeUser:
+		tenantSlug := tenant.MustSlugFromContext(ctx)
+		prefix, err := getPrefixByOwnerType(cmd.OwnerType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get prefix by owner type: %w", err)
+		}
+		key = tenantSlug + "/" + prefix + cmd.OwnerID + "/" + uuid.New().String() + ext
+	default:
+		return nil, fmt.Errorf("unsupported owner type: %s", cmd.OwnerType)
 	}
-
-	// Generate key
-	key := prefix + cmd.OwnerID + "/" + uuid.New().String() + ext
 
 	presignResult, err := h.presigner.CreatePresignedUpload(ctx, &PresignedUploadInput{
 		Key:         key,
