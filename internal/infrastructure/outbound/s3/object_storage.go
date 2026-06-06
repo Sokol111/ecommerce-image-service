@@ -86,6 +86,20 @@ func (o *objectStorage) ObjectExists(ctx context.Context, key string) (bool, err
 	return true, nil
 }
 
+func (o *objectStorage) DeleteByPrefix(ctx context.Context, prefix string) error {
+	objectsCh := o.client.ListObjects(ctx, o.bucket, minio.ListObjectsOptions{
+		Prefix:    prefix,
+		Recursive: true,
+	})
+
+	for err := range o.client.RemoveObjects(ctx, o.bucket, objectsCh, minio.RemoveObjectsOptions{}) {
+		if err.Err != nil {
+			return err.Err
+		}
+	}
+	return nil
+}
+
 func isMinioNotFound(err error) bool {
 	if err == nil {
 		return false
