@@ -4,7 +4,6 @@ import (
 	"context"
 
 	commonsmongo "github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
-	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -13,11 +12,11 @@ type imageRepository struct {
 	*commonsmongo.GenericRepository[image.Image, imageEntity]
 }
 
-func newImageRepository(admin commonsmongo.Admin, mapper *imageMapper) (image.Repository, error) {
+func newImageRepository(admin commonsmongo.Admin, mapper *imageMapper, resolver commonsmongo.DatabaseResolver) (image.Repository, error) {
 	genericRepo, err := commonsmongo.NewTenantRepository(
 		admin, "image",
 		mapper,
-		tenant.MustSlugFromContext,
+		resolver,
 	)
 	if err != nil {
 		return nil, err
