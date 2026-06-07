@@ -4,6 +4,7 @@ import (
 	"context"
 
 	commonsmongo "github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
+	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -16,6 +17,7 @@ func newImageRepository(admin commonsmongo.Admin, mapper *imageMapper) (image.Re
 	genericRepo, err := commonsmongo.NewTenantRepository(
 		admin, "image",
 		mapper,
+		tenant.MustSlugFromContext,
 	)
 	if err != nil {
 		return nil, err
