@@ -6,7 +6,7 @@ require (
 	github.com/Sokol111/ecommerce-catalog-service-api v1.2.2
 	github.com/Sokol111/ecommerce-commons v0.8.1
 	github.com/Sokol111/ecommerce-image-service-api v1.2.2
-	github.com/Sokol111/ecommerce-tenant-service-api v0.1.4
+	github.com/Sokol111/ecommerce-tenant-service-api v0.1.5
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/v2 v2.3.4
