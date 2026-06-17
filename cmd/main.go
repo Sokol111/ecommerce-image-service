@@ -13,17 +13,18 @@ import (
 	commons_validation "github.com/Sokol111/ecommerce-commons/pkg/security/validation"
 	commons_swaggerui "github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
 	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
-	"github.com/Sokol111/ecommerce-image-service-api/gen/httpapi"
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure"
-	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/http"
+	internalconnect "github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/connect"
 	inbound_kafka "github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/imgproxy"
 	outbound_kafka "github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/kafka"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/mongo"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/s3"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/security"
-	"github.com/Sokol111/ecommerce-tenant-service-api/tenantevents"
+	tenant_api_client "github.com/Sokol111/ecommerce-tenant-service-api/pkg/client"
+	tenant_api_consumer "github.com/Sokol111/ecommerce-tenant-service-api/pkg/consumer"
+	tenant_api_provider "github.com/Sokol111/ecommerce-tenant-service-api/pkg/provider"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,7 +33,7 @@ var AppModules = fx.Options(
 	// Commons
 	commons_core.NewCoreModule(),
 	commons_persistence.NewPersistenceModule(),
-	commons_http.NewHTTPModule(),
+	commons_http.NewHTTPModule(commons_http.WithH2C()),
 	commons_observability.NewObservabilityModule(),
 	commons_messaging.NewMessagingModule(),
 	commons_validation.NewModule(),
@@ -41,8 +42,11 @@ var AppModules = fx.Options(
 	httpclient.RegistryModule(),
 
 	// Tenant
+	// Tenant
 	tenant.NewModule(tenant.WithMigrations()),
-	tenantevents.Module(),
+	tenant_api_consumer.Module(),
+	tenant_api_provider.Module(),
+	tenant_api_client.Module(),
 	fx.Provide(fx.Annotate(s3.NewImageTenantCleaner,
 		fx.As(new(tenant.Cleaner)),
 		fx.ResultTags(`group:"tenant_cleaners"`),
@@ -66,9 +70,8 @@ var AppModules = fx.Options(
 	// Application Layer
 	application.Module(),
 
-	// HTTP
-	httpapi.ServerModule(),
-	http.NewHTTPHandlerModule(),
+	// Connect (gRPC/Connect-RPC)
+	internalconnect.Module(),
 )
 
 func main() {
