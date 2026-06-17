@@ -42,7 +42,7 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *connect.Request[i
 		return connect.NewResponse(&imagev1.CreatePresignResponse{
 			UploadUrl:   result.UploadURL,
 			UploadToken: result.UploadToken,
-			ExpiresIn:   int32(result.ExpiresIn),
+			ExpiresIn:   int64(result.ExpiresIn),
 		}), nil
 
 	default:
