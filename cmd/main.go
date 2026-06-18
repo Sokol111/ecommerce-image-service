@@ -11,7 +11,6 @@ import (
 	commons_persistence "github.com/Sokol111/ecommerce-commons/pkg/persistence"
 	commons_token "github.com/Sokol111/ecommerce-commons/pkg/security/token"
 	commons_validation "github.com/Sokol111/ecommerce-commons/pkg/security/validation"
-	commons_swaggerui "github.com/Sokol111/ecommerce-commons/pkg/swaggerui"
 	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/Sokol111/ecommerce-image-service/internal/application"
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure"
@@ -38,7 +37,6 @@ var AppModules = fx.Options(
 	commons_messaging.NewMessagingModule(),
 	commons_validation.NewModule(),
 	commons_token.NewModule(),
-	commons_swaggerui.NewSwaggerModule(),
 	httpclient.RegistryModule(),
 
 	// Tenant
