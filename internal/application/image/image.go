@@ -10,7 +10,7 @@ import (
 // Image - domain aggregate root
 type Image struct {
 	ID         string
-	Version    int
+	Version    int64
 	Alt        string
 	OwnerType  string
 	OwnerID    string
@@ -86,7 +86,7 @@ func NewImageWithID(id, alt, ownerType, ownerID, role, key, mime string, size in
 }
 
 // Reconstruct rebuilds an image from persistence (no validation)
-func Reconstruct(id string, version int, alt, ownerType, ownerID, role, key, mime string, size int64, status ImageStatus, createdAt, modifiedAt time.Time) *Image {
+func Reconstruct(id string, version int64, alt, ownerType, ownerID, role, key, mime string, size int64, status ImageStatus, createdAt, modifiedAt time.Time) *Image {
 	return &Image{
 		ID:         id,
 		Version:    version,

@@ -48,10 +48,10 @@ func (m *imageMapper) GetID(e *imageEntity) string {
 	return e.ID
 }
 
-func (m *imageMapper) GetVersion(e *imageEntity) int {
+func (m *imageMapper) GetVersion(e *imageEntity) int64 {
 	return e.Version
 }
 
-func (m *imageMapper) SetVersion(e *imageEntity, version int) {
+func (m *imageMapper) SetVersion(e *imageEntity, version int64) {
 	e.Version = version
 }

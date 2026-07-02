@@ -6,7 +6,7 @@ import (
 
 type imageEntity struct {
 	ID         string    `bson:"_id"`
-	Version    int       `bson:"version"`
+	Version    int64     `bson:"version"`
 	Alt        string    `bson:"alt"`
 	OwnerType  string    `bson:"ownerType"`
 	OwnerID    string    `bson:"ownerId"`

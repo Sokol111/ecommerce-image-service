@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
-	"github.com/Sokol111/ecommerce-image-service-api/gen/events"
+	eventsv1 "github.com/Sokol111/ecommerce-image-service-api/gen/events/image/v1"
+	apiEvents "github.com/Sokol111/ecommerce-image-service-api/pkg/events"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 )
 
@@ -15,16 +16,16 @@ func newImageEventFactory() image.ImageEventFactory {
 }
 
 func (f *imageEventFactory) NewProductImagePromotedOutboxMessage(ctx context.Context, productID string, imageID string, smallImageURL string, largeImageURL string) outbox.Message {
+	event := &eventsv1.ProductImagePromotedEvent{
+		ProductId:     productID,
+		ImageId:       imageID,
+		SmallImageUrl: smallImageURL,
+		LargeImageUrl: largeImageURL,
+	}
 	return outbox.Message{
-		Event: &events.ProductImagePromotedEvent{
-			Payload: events.ProductImagePromotedPayload{
-				ProductID:     productID,
-				ImageID:       imageID,
-				SmallImageURL: smallImageURL,
-				LargeImageURL: largeImageURL,
-			},
-		},
-		Key: productID,
+		Event: event,
+		Topic: apiEvents.TopicFor(event),
+		Key:   productID,
 	}
 }
 
