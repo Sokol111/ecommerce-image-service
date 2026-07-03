@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 
-	eventsv1 "github.com/Sokol111/ecommerce-catalog-service-api/gen/events/catalog/v1"
+	eventsv1 "github.com/Sokol111/ecommerce-catalog-service-api/gen/catalog/events/v1"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 )
 
