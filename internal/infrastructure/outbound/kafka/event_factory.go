@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
-	eventsv1 "github.com/Sokol111/ecommerce-image-service-api/gen/image/events/v1"
+	eventsv1 "github.com/Sokol111/ecommerce-image-service-api/gen/go/image/events/v1"
 	apiEvents "github.com/Sokol111/ecommerce-image-service-api/pkg/events"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 )

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	imagev1 "github.com/Sokol111/ecommerce-image-service-api/gen/connect/image/v1"
+	imagev1 "github.com/Sokol111/ecommerce-image-service-api/gen/go/image/v1"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

@@ -5,7 +5,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/Sokol111/ecommerce-commons/pkg/security/validation"
-	imagev1connect "github.com/Sokol111/ecommerce-image-service-api/gen/connect/image/v1/imagev1connect"
+	imagev1connect "github.com/Sokol111/ecommerce-image-service-api/gen/go/image/v1/imagev1connect"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 	"go.uber.org/fx"
 )
