@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# AGENTS.md
 
 > This service lives in the `ecommerce` multi-repo workspace. Workspace-wide rules
 > (release-then-bump, `go.work`, hexagonal + `fx` conventions, tenancy, the gen/secrets
