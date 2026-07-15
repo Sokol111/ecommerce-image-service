@@ -2,7 +2,7 @@
 
 > This service lives in the `ecommerce` multi-repo workspace. Workspace-wide rules
 > (release-then-bump, `go.work`, hexagonal + `fx` conventions, tenancy, the gen/secrets
-> edit guards) are in the **root `CLAUDE.md`** — read that first. This file only covers
+> edit guards) are in the **root `AGENTS.md`** — read that first. This file only covers
 > what is specific to `ecommerce-image-service`.
 
 ## What this service does
@@ -16,7 +16,7 @@ events, emits image events via the transactional outbox).
 ## Commands
 
 Standard workspace targets (`make run|build|test|lint|fmt|generate-mocks|check-all`) apply — see
-root CLAUDE.md. Notable extras in this repo's `Makefile`:
+root `AGENTS.md`. Notable extras in this repo's `Makefile`:
 
 ```bash
 make test-integration    # -tags=integration (real deps via testcontainers)
