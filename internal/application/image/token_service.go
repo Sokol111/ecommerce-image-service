@@ -8,6 +8,7 @@ import (
 // UploadTokenClaims represents the JWT claims for presigned upload
 type UploadTokenClaims struct {
 	Key         string `json:"key"`
+	Tenant      string `json:"tenant"`
 	OwnerType   string `json:"ownerType"`
 	OwnerID     string `json:"ownerId"`
 	Role        string `json:"role"`

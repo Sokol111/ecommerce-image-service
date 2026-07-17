@@ -67,7 +67,7 @@ func (s *jwtTokenService) ValidateUploadToken(ctx context.Context, tokenString s
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return s.secretKey, nil
-	})
+	}, jwt.WithExpirationRequired(), jwt.WithIssuer("image-service"), jwt.WithSubject("upload"), jwt.WithValidMethods([]string{"HS256"}))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse token: %w", err)

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
+	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"go.uber.org/zap"
 )
 
@@ -43,6 +44,9 @@ func (h *confirmUploadHandler) Handle(ctx context.Context, cmd ConfirmUploadComm
 	claims, err := h.tokenService.ValidateUploadToken(ctx, cmd.UploadToken)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidUploadToken, err)
+	}
+	if claims.Tenant != tenant.MustSlugFromContext(ctx) {
+		return nil, fmt.Errorf("%w: tenant mismatch", ErrInvalidUploadToken)
 	}
 
 	// Verify object exists in S3

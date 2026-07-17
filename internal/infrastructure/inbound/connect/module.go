@@ -53,7 +53,7 @@ func provideProcedurePermissions() validation.ProcedurePermissions {
 		imagev1connect.ImageServiceCreatePresignProcedure:  {"images:write"},
 		imagev1connect.ImageServiceConfirmUploadProcedure:  {"images:write"},
 		imagev1connect.ImageServicePromoteImagesProcedure:  {"images:write"},
-		imagev1connect.ImageServiceDeleteImageProcedure:    {"images:write"},
+		imagev1connect.ImageServiceDeleteImageProcedure:    {"images:delete"},
 		imagev1connect.ImageServiceGetImageProcedure:       {"images:read"},
 		imagev1connect.ImageServiceGetDeliveryUrlProcedure: {"images:read"},
 	}

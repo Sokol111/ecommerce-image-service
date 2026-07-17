@@ -85,12 +85,12 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 	}
 
 	// Generate key based on owner type
+	tenantSlug := tenant.MustSlugFromContext(ctx)
 	var key string
 	switch OwnerType(cmd.OwnerType) {
 	case OwnerTypeDraft:
 		key = "drafts/" + cmd.OwnerID + "/" + uuid.New().String() + ext
 	case OwnerTypeProduct, OwnerTypeUser:
-		tenantSlug := tenant.MustSlugFromContext(ctx)
 		prefix, err := getPrefixByOwnerType(cmd.OwnerType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get prefix by owner type: %w", err)
@@ -112,6 +112,7 @@ func (h *createPresignHandler) Handle(ctx context.Context, cmd CreatePresignComm
 	// Generate signed JWT token with upload metadata
 	uploadToken, err := h.tokenService.GenerateUploadToken(ctx, &UploadTokenClaims{
 		Key:         key,
+		Tenant:      tenantSlug,
 		OwnerType:   cmd.OwnerType,
 		OwnerID:     cmd.OwnerID,
 		Role:        cmd.Role,
