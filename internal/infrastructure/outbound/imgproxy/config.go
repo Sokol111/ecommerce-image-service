@@ -1,16 +1,15 @@
 package imgproxy
 
 import (
-	"encoding/hex"
 	"errors"
 	"strings"
 )
 
 type Config struct {
-	PublicBaseURL  string `koanf:"public-base-url"` // IMGPROXY_PUBLIC_BASE_URL
-	Bucket         string `koanf:"bucket"`          // S3_BUCKET
-	KeyHex         string `koanf:"key-hex"`         // IMGPROXY_KEY_HEX
-	SaltHex        string `koanf:"salt-hex"`        // IMGPROXY_SALT_HEX
+	PublicBaseURL  string `koanf:"public-base-url"`
+	Bucket         string `koanf:"bucket"`
+	KeyHex         string `koanf:"key-hex"`
+	SaltHex        string `koanf:"salt-hex"`
 	DefaultQuality int
 	Key            []byte
 	Salt           []byte
@@ -18,8 +17,6 @@ type Config struct {
 
 func (c *Config) ApplyDefaults() {
 	c.PublicBaseURL = strings.TrimRight(c.PublicBaseURL, "/")
-	c.Key, _ = hex.DecodeString(c.KeyHex)
-	c.Salt, _ = hex.DecodeString(c.SaltHex)
 	c.DefaultQuality = 80
 }
 

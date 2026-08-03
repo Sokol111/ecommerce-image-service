@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,11 +20,19 @@ type signer struct {
 }
 
 func NewImgproxySigner(cfg Config) (image.ImgproxySigner, error) {
+	key, err := hex.DecodeString(cfg.KeyHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode imgproxy key hex: %w", err)
+	}
+	salt, err := hex.DecodeString(cfg.SaltHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode imgproxy salt hex: %w", err)
+	}
 	return &signer{
 		publicBaseURL: cfg.PublicBaseURL,
 		bucket:        cfg.Bucket,
-		key:           cfg.Key,
-		salt:          cfg.Salt,
+		key:           key,
+		salt:          salt,
 	}, nil
 }
 
