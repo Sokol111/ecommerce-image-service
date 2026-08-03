@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type imageEntity struct {
+type ImageEntity struct {
 	ID         string    `bson:"_id"`
 	Version    int64     `bson:"version"`
 	Alt        string    `bson:"alt"`

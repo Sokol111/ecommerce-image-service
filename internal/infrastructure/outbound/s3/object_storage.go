@@ -13,8 +13,8 @@ type objectStorage struct {
 	bucket string
 }
 
-// newObjectStorage creates a new ObjectStorage implementation.
-func newObjectStorage(client *minio.Client, cfg Config) image.ObjectStorage {
+// NewObjectStorage creates a new ObjectStorage implementation.
+func NewObjectStorage(client *minio.Client, cfg Config) image.ObjectStorage {
 	return &objectStorage{
 		client: client,
 		bucket: cfg.Bucket,

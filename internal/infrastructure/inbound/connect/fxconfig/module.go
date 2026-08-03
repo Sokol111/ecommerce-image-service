@@ -1,4 +1,4 @@
-package connect
+package fxconfig
 
 import (
 	"net/http"
@@ -6,42 +6,24 @@ import (
 	"connectrpc.com/connect"
 	"github.com/Sokol111/ecommerce-commons/pkg/security/validation"
 	imagev1connect "github.com/Sokol111/ecommerce-image-service-api/gen/go/image/v1/imagev1connect"
-	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
+	internalconnect "github.com/Sokol111/ecommerce-image-service/internal/infrastructure/inbound/connect"
 	"go.uber.org/fx"
 )
 
-// Module provides the Connect gRPC/Connect-RPC server handler for image operations.
-func Module() fx.Option {
+// NewConnectModule provides the Connect gRPC/Connect-RPC server handler for image operations.
+func NewConnectModule() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			newImageHandler,
+			internalconnect.NewImageHandler,
 			provideProcedurePermissions,
 		),
 		fx.Invoke(registerConnectRoutes),
 	)
 }
 
-func newImageHandler(
-	createPresign image.CreatePresignCommandHandler,
-	confirmUpload image.ConfirmUploadCommandHandler,
-	promoteImages image.PromoteImagesCommandHandler,
-	deleteImage image.DeleteImageCommandHandler,
-	getImageByID image.GetImageByIDQueryHandler,
-	getDeliveryURL image.GetDeliveryURLQueryHandler,
-) *imageHandler {
-	return &imageHandler{
-		createPresignHandler:  createPresign,
-		confirmUploadHandler:  confirmUpload,
-		promoteImagesHandler:  promoteImages,
-		deleteImageHandler:    deleteImage,
-		getImageByIDHandler:   getImageByID,
-		getDeliveryURLHandler: getDeliveryURL,
-	}
-}
-
 func registerConnectRoutes(
 	mux *http.ServeMux,
-	handler *imageHandler,
+	handler *internalconnect.ImageHandler,
 	interceptors []connect.Interceptor,
 ) {
 	path, h := imagev1connect.NewImageServiceHandler(handler, connect.WithInterceptors(interceptors...))

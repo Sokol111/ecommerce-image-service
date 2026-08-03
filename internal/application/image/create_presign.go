@@ -60,12 +60,12 @@ type createPresignHandler struct {
 	maxUploadBytes int64
 }
 
-func NewCreatePresignHandler(presigner Presigner, tokenService TokenService, presignTTL time.Duration, maxUploadBytes int64) CreatePresignCommandHandler {
+func NewCreatePresignHandler(presigner Presigner, tokenService TokenService, ttlProvider PresignTTLProvider, cfg Config) CreatePresignCommandHandler {
 	return &createPresignHandler{
 		presigner:      presigner,
 		tokenService:   tokenService,
-		presignTTL:     presignTTL,
-		maxUploadBytes: maxUploadBytes,
+		presignTTL:     ttlProvider.GetPresignTTL(),
+		maxUploadBytes: cfg.MaxUploadBytes,
 	}
 }
 

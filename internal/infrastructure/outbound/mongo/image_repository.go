@@ -3,27 +3,18 @@ package mongo
 import (
 	"context"
 
-	commonsmongo "github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
+	commonsmongo "github.com/Sokol111/ecommerce-commons/pkg/mongo"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type imageRepository struct {
-	*commonsmongo.GenericRepository[image.Image, imageEntity]
+	*commonsmongo.GenericRepository[image.Image, ImageEntity]
 }
 
-func newImageRepository(admin commonsmongo.Admin, mapper *imageMapper, resolver commonsmongo.DatabaseResolver) (image.Repository, error) {
-	genericRepo, err := commonsmongo.NewTenantRepository(
-		admin, "image",
-		mapper,
-		resolver,
-	)
-	if err != nil {
-		return nil, err
-	}
-
+func NewImageRepository(genericRepository *commonsmongo.GenericRepository[image.Image, ImageEntity]) (image.Repository, error) {
 	return &imageRepository{
-		GenericRepository: genericRepo,
+		GenericRepository: genericRepository,
 	}, nil
 }
 

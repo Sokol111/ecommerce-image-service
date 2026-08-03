@@ -4,14 +4,14 @@ import (
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
 )
 
-type imageMapper struct{}
+type ImageMapper struct{}
 
-func newImageMapper() *imageMapper {
-	return &imageMapper{}
+func NewImageMapper() *ImageMapper {
+	return &ImageMapper{}
 }
 
-func (m *imageMapper) ToEntity(img *image.Image) *imageEntity {
-	return &imageEntity{
+func (m *ImageMapper) ToEntity(img *image.Image) *ImageEntity {
+	return &ImageEntity{
 		ID:         img.ID,
 		Version:    img.Version,
 		Alt:        img.Alt,
@@ -27,7 +27,7 @@ func (m *imageMapper) ToEntity(img *image.Image) *imageEntity {
 	}
 }
 
-func (m *imageMapper) ToDomain(e *imageEntity) *image.Image {
+func (m *ImageMapper) ToDomain(e *ImageEntity) *image.Image {
 	return image.Reconstruct(
 		e.ID,
 		e.Version,
@@ -44,14 +44,14 @@ func (m *imageMapper) ToDomain(e *imageEntity) *image.Image {
 	)
 }
 
-func (m *imageMapper) GetID(e *imageEntity) string {
+func (m *ImageMapper) GetID(e *ImageEntity) string {
 	return e.ID
 }
 
-func (m *imageMapper) GetVersion(e *imageEntity) int64 {
+func (m *ImageMapper) GetVersion(e *ImageEntity) int64 {
 	return e.Version
 }
 
-func (m *imageMapper) SetVersion(e *imageEntity, version int64) {
+func (m *ImageMapper) SetVersion(e *ImageEntity, version int64) {
 	e.Version = version
 }

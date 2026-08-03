@@ -3,8 +3,6 @@ package s3
 import (
 	"fmt"
 	"time"
-
-	"github.com/knadh/koanf/v2"
 )
 
 type Config struct {
@@ -27,27 +25,56 @@ type Config struct {
 	IdleConnTimeout     time.Duration // default 90s if zero
 }
 
-func newConfig(k *koanf.Koanf) (Config, error) {
-	var cfg Config
-	if err := k.Unmarshal("s3", &cfg); err != nil {
-		return cfg, fmt.Errorf("failed to load s3 config: %w", err)
+func (c *Config) ApplyDefaults() {
+	if c.PresignTTL == 0 {
+		c.PresignTTL = 15 * time.Minute
 	}
-	if cfg.PresignTTL == 0 {
-		cfg.PresignTTL = 15 * time.Minute
+	if c.HTTPTimeout == 0 {
+		c.HTTPTimeout = 30 * time.Second
 	}
-	if cfg.HTTPTimeout == 0 {
-		cfg.HTTPTimeout = 30 * time.Second
+	if c.MaxIdleConns == 0 {
+		c.MaxIdleConns = 100
 	}
-	if cfg.MaxIdleConns == 0 {
-		cfg.MaxIdleConns = 100
+	if c.MaxIdleConnsPerHost == 0 {
+		c.MaxIdleConnsPerHost = 100
 	}
-	if cfg.MaxIdleConnsPerHost == 0 {
-		cfg.MaxIdleConnsPerHost = 100
+	if c.IdleConnTimeout == 0 {
+		c.IdleConnTimeout = 90 * time.Second
 	}
-	if cfg.IdleConnTimeout == 0 {
-		cfg.IdleConnTimeout = 90 * time.Second
+}
+
+func (c *Config) Validate() error {
+	if c.Bucket == "" {
+		return fmt.Errorf("s3 bucket is required")
 	}
-	return cfg, nil
+	if c.Region == "" {
+		return fmt.Errorf("s3 region is required")
+	}
+	if c.PublicEndpoint == "" {
+		return fmt.Errorf("s3 public endpoint is required")
+	}
+	if c.AccessKeyID == "" {
+		return fmt.Errorf("s3 access key ID is required")
+	}
+	if c.SecretKey == "" {
+		return fmt.Errorf("s3 secret key is required")
+	}
+	if c.PresignTTL <= 0 {
+		return fmt.Errorf("s3 presign TTL must be greater than zero")
+	}
+	if c.HTTPTimeout <= 0 {
+		return fmt.Errorf("s3 HTTP timeout must be greater than zero")
+	}
+	if c.MaxIdleConns <= 0 {
+		return fmt.Errorf("s3 max idle connections must be greater than zero")
+	}
+	if c.MaxIdleConnsPerHost <= 0 {
+		return fmt.Errorf("s3 max idle connections per host must be greater than zero")
+	}
+	if c.IdleConnTimeout <= 0 {
+		return fmt.Errorf("s3 idle connection timeout must be greater than zero")
+	}
+	return nil
 }
 
 // GetPresignTTL returns the presign TTL for use by other modules (e.g., token generation)

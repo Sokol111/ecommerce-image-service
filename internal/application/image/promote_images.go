@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/Sokol111/ecommerce-commons/pkg/core/logger"
-	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
-	"github.com/Sokol111/ecommerce-commons/pkg/persistence/mongo"
+	"github.com/Sokol111/ecommerce-commons/pkg/kafka/outbox"
+	"github.com/Sokol111/ecommerce-commons/pkg/mongo"
 	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
@@ -45,7 +45,7 @@ type promoteImagesHandler struct {
 	imageQuality int
 }
 
-func NewPromoteImagesHandler(repo Repository, objStorage ObjectStorage, signer ImgproxySigner, outbox outbox.Outbox, txManager mongo.TxManager, eventFactory ImageEventFactory, smallWidth, largeWidth, quality int) PromoteImagesCommandHandler {
+func NewPromoteImagesHandler(repo Repository, objStorage ObjectStorage, signer ImgproxySigner, outbox outbox.Outbox, txManager mongo.TxManager, eventFactory ImageEventFactory, cfg Config) PromoteImagesCommandHandler {
 	return &promoteImagesHandler{
 		repo:         repo,
 		objStorage:   objStorage,
@@ -53,9 +53,9 @@ func NewPromoteImagesHandler(repo Repository, objStorage ObjectStorage, signer I
 		outbox:       outbox,
 		txManager:    txManager,
 		eventFactory: eventFactory,
-		smallWidth:   smallWidth,
-		largeWidth:   largeWidth,
-		imageQuality: quality,
+		smallWidth:   cfg.SmallWidth,
+		largeWidth:   cfg.LargeWidth,
+		imageQuality: cfg.Quality,
 	}
 }
 

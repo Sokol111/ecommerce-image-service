@@ -17,7 +17,7 @@ type presigner struct {
 	ttl    time.Duration
 }
 
-func newPresigner(client *minio.Client, cfg Config) image.Presigner {
+func NewPresigner(client *minio.Client, cfg Config) image.Presigner {
 	return &presigner{
 		client: client,
 		bucket: cfg.Bucket,

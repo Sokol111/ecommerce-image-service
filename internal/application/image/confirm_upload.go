@@ -30,12 +30,12 @@ type confirmUploadHandler struct {
 	maxUploadBytes int64
 }
 
-func NewConfirmUploadHandler(repo Repository, storage ObjectStorage, tokenService TokenService, maxUploadBytes int64) ConfirmUploadCommandHandler {
+func NewConfirmUploadHandler(repo Repository, storage ObjectStorage, tokenService TokenService, cfg Config) ConfirmUploadCommandHandler {
 	return &confirmUploadHandler{
 		repo:           repo,
 		objStorage:     storage,
 		tokenService:   tokenService,
-		maxUploadBytes: maxUploadBytes,
+		maxUploadBytes: cfg.MaxUploadBytes,
 	}
 }
 

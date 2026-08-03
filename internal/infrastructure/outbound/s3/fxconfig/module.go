@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Sokol111/ecommerce-image-service/internal/application"
+	"github.com/Sokol111/ecommerce-commons/pkg/core/config"
+	"github.com/Sokol111/ecommerce-commons/pkg/tenant"
+	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
+	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/s3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.uber.org/fx"
@@ -13,18 +16,26 @@ import (
 
 func NewS3Module() fx.Option {
 	return fx.Options(
-		fx.Provide(newConfig),
-		fx.Provide(func(cfg Config) application.PresignTTLProvider { return cfg }),
+		fx.Provide(provideConfig),
+		fx.Provide(func(cfg s3.Config) image.PresignTTLProvider { return cfg }),
+		fx.Provide(fx.Annotate(s3.NewImageTenantCleaner,
+			fx.As(new(tenant.Cleaner)),
+			fx.ResultTags(`group:"tenant_cleaners"`),
+		)),
 		newStorageModule(),
 		newPresignerModule(),
 	)
+}
+
+func provideConfig(loader *config.Loader) (s3.Config, error) {
+	return config.Load[s3.Config](loader, "s3", nil)
 }
 
 // newStorageModule provides ObjectStorage with an internal MinIO client.
 func newStorageModule() fx.Option {
 	return fx.Module("s3-storage",
 		fx.Provide(fx.Private, newInternalClient),
-		fx.Provide(newObjectStorage),
+		fx.Provide(s3.NewObjectStorage),
 	)
 }
 
@@ -33,12 +44,12 @@ func newStorageModule() fx.Option {
 func newPresignerModule() fx.Option {
 	return fx.Module("s3-presigner",
 		fx.Provide(fx.Private, newPublicClient),
-		fx.Provide(newPresigner),
+		fx.Provide(s3.NewPresigner),
 	)
 }
 
 // newInternalClient creates a MinIO client using the internal endpoint for server-to-server S3 operations.
-func newInternalClient(cfg Config) (*minio.Client, error) {
+func newInternalClient(cfg s3.Config) (*minio.Client, error) {
 	if cfg.AccessKeyID == "" || cfg.SecretKey == "" {
 		return nil, fmt.Errorf("missing required S3 credentials: access-key-id and secret-key must both be set")
 	}
@@ -61,7 +72,7 @@ func newInternalClient(cfg Config) (*minio.Client, error) {
 
 // newPublicClient creates a MinIO client using the public endpoint so that
 // presigned URL signatures include the correct Host for browser requests.
-func newPublicClient(cfg Config) (*minio.Client, error) {
+func newPublicClient(cfg s3.Config) (*minio.Client, error) {
 	endpoint := cfg.PublicEndpoint
 	if endpoint == "" {
 		endpoint = cfg.Endpoint

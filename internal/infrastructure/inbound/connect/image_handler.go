@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type imageHandler struct {
+type ImageHandler struct {
 	createPresignHandler  image.CreatePresignCommandHandler
 	confirmUploadHandler  image.ConfirmUploadCommandHandler
 	promoteImagesHandler  image.PromoteImagesCommandHandler
@@ -20,7 +20,25 @@ type imageHandler struct {
 	getDeliveryURLHandler image.GetDeliveryURLQueryHandler
 }
 
-func (h *imageHandler) CreatePresign(ctx context.Context, req *connect.Request[imagev1.CreatePresignRequest]) (*connect.Response[imagev1.CreatePresignResponse], error) {
+func NewImageHandler(
+	createPresign image.CreatePresignCommandHandler,
+	confirmUpload image.ConfirmUploadCommandHandler,
+	promoteImages image.PromoteImagesCommandHandler,
+	deleteImage image.DeleteImageCommandHandler,
+	getImageByID image.GetImageByIDQueryHandler,
+	getDeliveryURL image.GetDeliveryURLQueryHandler,
+) *ImageHandler {
+	return &ImageHandler{
+		createPresignHandler:  createPresign,
+		confirmUploadHandler:  confirmUpload,
+		promoteImagesHandler:  promoteImages,
+		deleteImageHandler:    deleteImage,
+		getImageByIDHandler:   getImageByID,
+		getDeliveryURLHandler: getDeliveryURL,
+	}
+}
+
+func (h *ImageHandler) CreatePresign(ctx context.Context, req *connect.Request[imagev1.CreatePresignRequest]) (*connect.Response[imagev1.CreatePresignResponse], error) {
 	ownerType := protoOwnerTypeToString(req.Msg.GetOwnerType())
 
 	switch req.Msg.GetOwnerType() {
@@ -50,7 +68,7 @@ func (h *imageHandler) CreatePresign(ctx context.Context, req *connect.Request[i
 	}
 }
 
-func (h *imageHandler) ConfirmUpload(ctx context.Context, req *connect.Request[imagev1.ConfirmUploadRequest]) (*connect.Response[imagev1.ConfirmUploadResponse], error) {
+func (h *ImageHandler) ConfirmUpload(ctx context.Context, req *connect.Request[imagev1.ConfirmUploadRequest]) (*connect.Response[imagev1.ConfirmUploadResponse], error) {
 	cmd := image.ConfirmUploadCommand{
 		UploadToken: req.Msg.GetUploadToken(),
 		Alt:         req.Msg.GetAlt(),
@@ -68,7 +86,7 @@ func (h *imageHandler) ConfirmUpload(ctx context.Context, req *connect.Request[i
 	}), nil
 }
 
-func (h *imageHandler) GetImage(ctx context.Context, req *connect.Request[imagev1.GetImageRequest]) (*connect.Response[imagev1.GetImageResponse], error) {
+func (h *ImageHandler) GetImage(ctx context.Context, req *connect.Request[imagev1.GetImageRequest]) (*connect.Response[imagev1.GetImageResponse], error) {
 	q := image.GetImageByIDQuery{ID: req.Msg.GetId()}
 
 	img, err := h.getImageByIDHandler.Handle(ctx, q)
@@ -85,7 +103,7 @@ func (h *imageHandler) GetImage(ctx context.Context, req *connect.Request[imagev
 	}), nil
 }
 
-func (h *imageHandler) DeleteImage(ctx context.Context, req *connect.Request[imagev1.DeleteImageRequest]) (*connect.Response[imagev1.DeleteImageResponse], error) {
+func (h *ImageHandler) DeleteImage(ctx context.Context, req *connect.Request[imagev1.DeleteImageRequest]) (*connect.Response[imagev1.DeleteImageResponse], error) {
 	hard := false
 	if req.Msg.Hard != nil {
 		hard = *req.Msg.Hard
@@ -103,7 +121,7 @@ func (h *imageHandler) DeleteImage(ctx context.Context, req *connect.Request[ima
 	return connect.NewResponse(&imagev1.DeleteImageResponse{}), nil
 }
 
-func (h *imageHandler) GetDeliveryUrl(ctx context.Context, req *connect.Request[imagev1.GetDeliveryUrlRequest]) (*connect.Response[imagev1.GetDeliveryUrlResponse], error) { //nolint:revive
+func (h *ImageHandler) GetDeliveryUrl(ctx context.Context, req *connect.Request[imagev1.GetDeliveryUrlRequest]) (*connect.Response[imagev1.GetDeliveryUrlResponse], error) { //nolint:revive
 	q := image.GetDeliveryURLQuery{
 		ImageID: req.Msg.GetId(),
 		Width:   optInt32ToIntPtr(req.Msg.W),
@@ -140,7 +158,7 @@ func (h *imageHandler) GetDeliveryUrl(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(resp), nil
 }
 
-func (h *imageHandler) PromoteImages(ctx context.Context, req *connect.Request[imagev1.PromoteImagesRequest]) (*connect.Response[imagev1.PromoteImagesResponse], error) {
+func (h *ImageHandler) PromoteImages(ctx context.Context, req *connect.Request[imagev1.PromoteImagesRequest]) (*connect.Response[imagev1.PromoteImagesResponse], error) {
 	var imageIDs *[]string
 	if len(req.Msg.GetImages()) > 0 {
 		ids := req.Msg.GetImages()

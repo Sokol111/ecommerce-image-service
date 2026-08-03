@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 
-	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
+	"github.com/Sokol111/ecommerce-commons/pkg/kafka/outbox"
 	eventsv1 "github.com/Sokol111/ecommerce-image-service-api/gen/go/image/events/v1"
 	apiEvents "github.com/Sokol111/ecommerce-image-service-api/pkg/events"
 	"github.com/Sokol111/ecommerce-image-service/internal/application/image"
@@ -11,7 +11,7 @@ import (
 
 type imageEventFactory struct{}
 
-func newImageEventFactory() image.ImageEventFactory {
+func NewImageEventFactory() image.ImageEventFactory {
 	return &imageEventFactory{}
 }
 

@@ -3,7 +3,7 @@ package image //nolint:revive // intentional package name
 import (
 	"context"
 
-	"github.com/Sokol111/ecommerce-commons/pkg/messaging/patterns/outbox"
+	"github.com/Sokol111/ecommerce-commons/pkg/kafka/outbox"
 )
 
 // ImageEventFactory defines the port for creating outbox messages.

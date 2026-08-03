@@ -18,7 +18,7 @@ type signer struct {
 	salt          []byte
 }
 
-func newImgproxySigner(cfg Config) (image.ImgproxySigner, error) {
+func NewImgproxySigner(cfg Config) (image.ImgproxySigner, error) {
 	return &signer{
 		publicBaseURL: cfg.PublicBaseURL,
 		bucket:        cfg.Bucket,

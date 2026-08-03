@@ -3,10 +3,7 @@ package imgproxy
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"strings"
-
-	"github.com/knadh/koanf/v2"
 )
 
 type Config struct {
@@ -19,27 +16,28 @@ type Config struct {
 	Salt           []byte
 }
 
-func newConfig(k *koanf.Koanf) (Config, error) {
-	var cfg Config
-	if err := k.Unmarshal("imgproxy", &cfg); err != nil {
-		return cfg, fmt.Errorf("failed to load imgproxy config: %w", err)
-	}
-	if cfg.PublicBaseURL == "" {
-		return cfg, errors.New("imgproxy public base URL is required")
-	}
-	cfg.PublicBaseURL = strings.TrimRight(cfg.PublicBaseURL, "/")
+func (c *Config) ApplyDefaults() {
+	c.PublicBaseURL = strings.TrimRight(c.PublicBaseURL, "/")
+	c.Key, _ = hex.DecodeString(c.KeyHex)
+	c.Salt, _ = hex.DecodeString(c.SaltHex)
+	c.DefaultQuality = 80
+}
 
-	key, err := hex.DecodeString(cfg.KeyHex)
-	if err != nil {
-		return cfg, fmt.Errorf("failed to decode key: %w", err)
+func (c *Config) Validate() error {
+	if c.PublicBaseURL == "" {
+		return errors.New("imgproxy public base URL is required")
 	}
-	cfg.Key = key
-	salt, err := hex.DecodeString(cfg.SaltHex)
-	if err != nil {
-		return cfg, fmt.Errorf("failed to decode salt: %w", err)
+	if len(c.Key) == 0 {
+		return errors.New("imgproxy key is required")
 	}
-	cfg.Salt = salt
-	cfg.DefaultQuality = 80
-
-	return cfg, nil
+	if len(c.Salt) == 0 {
+		return errors.New("imgproxy salt is required")
+	}
+	if c.DefaultQuality < 1 || c.DefaultQuality > 100 {
+		return errors.New("imgproxy default quality must be between 1 and 100")
+	}
+	if c.Bucket == "" {
+		return errors.New("imgproxy bucket is required")
+	}
+	return nil
 }
