@@ -1,4 +1,4 @@
-package token
+package fxconfig
 
 import (
 	"github.com/Sokol111/ecommerce-commons/pkg/core/config"

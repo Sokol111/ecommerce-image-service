@@ -1,4 +1,4 @@
-package kafka
+package fxconfig
 
 import (
 	"github.com/Sokol111/ecommerce-image-service/internal/infrastructure/outbound/kafka"

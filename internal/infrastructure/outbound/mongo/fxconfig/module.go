@@ -1,4 +1,4 @@
-package mongo
+package fxconfig
 
 import (
 	commonsmongo "github.com/Sokol111/ecommerce-commons/pkg/mongo"
