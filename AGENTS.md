@@ -24,8 +24,6 @@ make bench               # go test -bench=. -benchmem
 make profile-cpu         # CPU pprof over benchmarks, opens http://:8081
 make docker-run          # run the image with --env-file .env on :8080
 ```
-Run a single test: `go test ./internal/application/image/ -run TestConfirmUpload -v`
-
 There is **no `-api` protobuf source in this repo**. Contracts come from the separate
 `ecommerce-image-service-api` (RPCs it serves) and `ecommerce-catalog-service-api` (events it
 consumes) modules. To change an RPC or event schema, edit `.proto` in the relevant `-api` repo and
@@ -81,8 +79,11 @@ So the same promote/cleanup use cases are driven both synchronously (RPC) and as
   storage + presigner + `tenant_cleaner.go`), `imgproxy/` (URL signer), `mongo/` (repository +
   entity/mapper), `security/` (upload-token JWT), `kafka/` (outbox event producer).
 - `db/migrations/*.json` — **MongoDB index migrations as JSON command documents** (golang-migrate
-  mongodb driver), run at startup because `main.go` wires `tenant.NewModule(tenant.WithMigrations())`.
-  Add index changes as a new numbered up/down pair; do not mutate existing ones.
+  mongodb driver). The default runner applies them when `mongo.migrations.enabled`; when
+  `multi-tenancy.enabled`, `fx_commons.NewCommonsModule()` selects tenant-wide migration. Add index
+  changes as a new numbered up/down pair; do not mutate existing ones.
+- The `image` repository is tenant-scoped: construct it with `mongo.NewGenericRepository` and
+  `tenant.NewMultiTenantCollectionProvider`, not a fixed collection provider.
 - `s3.NewImageTenantCleaner` is registered into the `tenant_cleaners` fx group so tenant deletion
   wipes that tenant's S3 prefix — remember it when changing key layout.
 
