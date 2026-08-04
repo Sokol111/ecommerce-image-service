@@ -22,10 +22,10 @@ func (c *Config) Validate() error {
 	if c.PublicBaseURL == "" {
 		return errors.New("imgproxy public base URL is required")
 	}
-	if len(c.Key) == 0 {
+	if c.KeyHex == "" {
 		return errors.New("imgproxy key is required")
 	}
-	if len(c.Salt) == 0 {
+	if c.SaltHex == "" {
 		return errors.New("imgproxy salt is required")
 	}
 	if c.Bucket == "" {
