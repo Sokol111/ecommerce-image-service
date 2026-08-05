@@ -18,8 +18,8 @@ github.com/Sokol111/ecommerce-catalog-service-api v1.3.6 h1:0Y7gN6xZEWuN2Ixlmd7M
 github.com/Sokol111/ecommerce-catalog-service-api v1.3.6/go.mod h1:6p2N6mqTNurQVwyuHiSEFUIT+B3j0KJQ6kv9jxYMroM=
 github.com/Sokol111/ecommerce-commons v0.8.16 h1:gT8hohR90lxrml9eIMuCfxVnqnXTDVkBEZDmo57noJU=
 github.com/Sokol111/ecommerce-commons v0.8.16/go.mod h1:fAfJbRy5SQbrrF8kH4P0tWj8KPo1bdzT4/YwlhcqWl8=
-github.com/Sokol111/ecommerce-image-service-api v1.2.13 h1:X3jRoaH8YkLpuhTskcrGymwHKV6mf9mkwhMdB7VygE4=
-github.com/Sokol111/ecommerce-image-service-api v1.2.13/go.mod h1:NrEx9EKoOceh+v9WkriWa2RDqL2bl1IbB2/bk/4nuUU=
+github.com/Sokol111/ecommerce-image-service-api v1.2.14 h1:qhmGw/8c2PC31p1oWhWHOWkbgcwxz+1d9BORBx5yEMk=
+github.com/Sokol111/ecommerce-image-service-api v1.2.14/go.mod h1:NrEx9EKoOceh+v9WkriWa2RDqL2bl1IbB2/bk/4nuUU=
 github.com/Sokol111/ecommerce-tenant-service-api v0.2.11 h1:pNiwd+X6/oAyFQdnEF437Jtz8dWi3jCBpI6gIp/kkec=
 github.com/Sokol111/ecommerce-tenant-service-api v0.2.11/go.mod h1:va3VX6U5in92dSKEy7kTBTID60rF69kClhHJWckuYhY=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
