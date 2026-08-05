@@ -1,6 +1,11 @@
 name: Deploy
 
 on:
+  workflow_run:
+    workflows: ["Release"]
+    branches: [main, master]
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       image_tag:
@@ -13,6 +18,7 @@ permissions:
 
 jobs:
   deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     uses: Sokol111/ecommerce-infrastructure/.github/workflows/deploy.yml@master
     with:
       image_tag: ${{ inputs.image_tag }}

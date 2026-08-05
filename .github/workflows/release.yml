@@ -1,11 +1,11 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - VERSION
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main, master]
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -13,19 +13,34 @@ permissions:
   packages: write
 
 jobs:
-  ci:
-    uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-ci.yml@master
-    with:
-      coverage-threshold: 0
+  check-version:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="v$(cat VERSION | tr -d '\n' | tr -d '\r')"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if version is new
+        id: check
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            echo "No new VERSION, skipping release"
+          else
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          fi
 
   release:
-    needs: ci
+    needs: check-version
+    if: ${{ needs.check-version.outputs.proceed == 'true' }}
     uses: Sokol111/ecommerce-infrastructure/.github/workflows/go-release.yml@master
-
-  deploy:
-    needs: release
-    uses: Sokol111/ecommerce-infrastructure/.github/workflows/deploy.yml@master
-    with:
-      image_tag: ${{ needs.release.outputs.image_tag }}
-    secrets:
-      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
