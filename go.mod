@@ -4,10 +4,10 @@ go 1.26.5
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/Sokol111/ecommerce-catalog-service-api v1.3.4
-	github.com/Sokol111/ecommerce-commons v0.8.10
-	github.com/Sokol111/ecommerce-image-service-api v1.2.11
-	github.com/Sokol111/ecommerce-tenant-service-api v0.2.6
+	github.com/Sokol111/ecommerce-catalog-service-api v1.3.6
+	github.com/Sokol111/ecommerce-commons v0.8.16
+	github.com/Sokol111/ecommerce-image-service-api v1.2.13
+	github.com/Sokol111/ecommerce-tenant-service-api v0.2.11
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/minio/minio-go/v7 v7.2.1
