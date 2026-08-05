@@ -1,0 +1,21 @@
+.github/workflows/deploy.yml
+  s_399290b5b84af9::t_a1f352ebcb0588 4-8,21
+.github/workflows/release.yml
+  s_399290b5b84af9::t_9c9174647d2e95 4-8,16-41,44-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "dca8ec060f556d83db3fe5efe087206569135359",
+  "prompts": {},
+  "sessions": {
+    "s_399290b5b84af9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_02f53502affeV3oEBoXEFdN7LQ",
+        "model": "kimi-k2.7-code"
+      },
+      "human_author": "Sokol111 <igorsokol111@gmail.com>"
+    }
+  }
+}
